@@ -3,7 +3,7 @@ from ._ortak import kutu, liste, hesap
 K = {
  "slug": "ankara-tel-orgu", "ad": "Tel Örgü", "baslik": "Ankara Tel Örgü", "ikon": "orgu",
  "kisa": "Galvaniz ya da PVC kaplı örgü tel; beton ya da demir direkle, gerdirilmiş halde montaj.",
- "gorsel": "beton-direk-ve-tel-orgu", "gorsel2": "tel-orgu-cesidi",
+ "gorsel": "beton-direk-ve-tel-orgu", "gorsel2": "tel-orgu3",
  "kat": {
   "title": "Ankara Tel Örgü - Fiyat, Çeşit ve Montaj | Doğanay Tel Örgü",
   "desc": "Ankara tel örgü: galvaniz ve PVC kaplı örgü tel, beton/demir direk, montaj. Fiyatlar, çeşitler, kullanım alanları ve sipariş hattı tek sayfada.",

@@ -3,7 +3,7 @@ from ._ortak import kutu, liste, hesap
 K = {
  "slug": "ankara-orgu-panel-cit", "ad": "Örgü Panel Çit", "baslik": "Ankara Örgü Panel Çit", "ikon": "panel",
  "kisa": "Kaynaklı, V katlamalı, boyalı hazır panellerle düzgün ve rijit çit; site, fabrika, okul ve müstakil ev için.",
- "gorsel": "tel-cit", "gorsel2": "panel-cit",
+ "gorsel": "tel-orgu-sistemi", "gorsel2": "panelcit",
  "kat": {
   "title": "Ankara Örgü Panel Çit - Panel Çit Montajı | Doğanay Tel Örgü",
   "desc": "Ankara örgü panel çit ve panel çit montajı: 2D/3D kaynaklı panel, yeşil ve antrasit, direk ve kelepçe. Fiyat, çeşit, kullanım ve sipariş.",
@@ -128,7 +128,7 @@ katlamalar (3D) bulunur, yüzeyi elektrostatik toz boyayla kaplanır. Sahada dir
   "title": "Ankara Panel Çit Çeşitleri: 2D, 3D, Renk ve Yükseklik",
   "desc": "Örgü panel çit çeşitleri: 2D ve 3D panel, tel kalınlıkları, yeşil ve antrasit renkler, yükseklikler, direk ve kelepçe sistemleri.",
   "h1": "Ankara Örgü Panel Çit Çeşitleri",
-  "gorsel": "panel-cit",
+  "gorsel": "panel-tel3",
   "ust": "2D, 3D, 4 mm, 5 mm, yeşil, antrasit… Panel çit seçeneklerini ve hangisinin nereye uyduğunu anlattık.",
   "giris": [(None, "<p>Panel çitte seçim beş başlıkta yapılır: panel tipi, tel kalınlığı, yükseklik, renk ve direk sistemi.</p>")],
   "cesitler": [

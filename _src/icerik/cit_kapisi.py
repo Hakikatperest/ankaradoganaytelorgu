@@ -3,7 +3,7 @@ from ._ortak import kutu, liste, hesap
 K = {
  "slug": "ankara-cit-kapisi", "ad": "Çit Kapısı", "baslik": "Ankara Çit Kapısı", "ikon": "kapi",
  "kisa": "Tel örgü ve panel çite uygun yaya ve araç kapısı; tek ya da çift kanatlı, sürgülü, kilit yerli.",
- "gorsel": "tel-orgu-kapi", "gorsel2": "bahce-teli",
+ "gorsel": "bahce-kapisi", "gorsel2": "koruma-kapisi",
  "kat": {
   "title": "Ankara Çit Kapısı ve Bahçe Kapısı | Doğanay Tel Örgü",
   "desc": "Ankara çit kapısı: tel örgü ve panel çit için tek kanat yaya, çift kanat araç ve sürgülü kapı. Fiyat, çeşit, kullanım alanları ve sipariş.",
@@ -112,7 +112,7 @@ eklemek de sık yaptığımız işler.</p>""", "ekleme"),
   "title": "Ankara Çit Kapısı Çeşitleri: Yaya, Araç, Sürgülü, Motorlu",
   "desc": "Çit kapısı çeşitleri: tek kanat yaya kapısı, çift kanat araç kapısı, sürgülü ve motorlu kapı, tel örgü ve panel dolgu, kilit seçenekleri.",
   "h1": "Ankara Çit Kapısı Çeşitleri",
-  "gorsel": "tel-orgu-kapi",
+  "gorsel": "tel-orgu-kapi-panel",
   "ust": "Tek kanat mı, çift kanat mı, sürgülü mü? Hangi dolgu, hangi kilit? Çit kapısı seçeneklerini anlattık.",
   "giris": [(None, "<p>Kapı seçimi üç soruya dayanır: kim geçecek (insan mı araç mı), kapı nasıl açılacak ve çitle nasıl uyum sağlayacak.</p>")],
   "cesitler": [

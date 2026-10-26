@@ -6,6 +6,8 @@ Girdi:     _src/data.py (görseller, ilçeler, süreç, genel SSS), _src/icerik/
            img/stok/*.jpg (Unsplash, temsili), images/*.webp (kullanıcının gerçek fotoğrafları)
 Çıktı:     index.html, /<kategori>/ × 9, /<kategori>-fiyatlari/ × 9, /<kategori>-cesitleri/ × 9, /siparis-hatti/,
            /hakkimizda/, /iletisim/, 404.html, sitemap.xml, robots.txt, assets/, images/g + images/k türevleri
+İlçe:      /<ilce>-<urun>/ × 60 (20 ilçe × beton direk, jiletli tel, tel örgü; fiyat + satan yerler TEK sayfada — kullanıcı
+           2026-10-26 onayladı) + /ankara-ilceleri/ dizini. İlçe verisi _src/ilceler.py (kaynaklı, 2025-2026).
 Yapı:      "Kullanım Alanları" ve "Sipariş Ver" ayrı sayfa DEĞİL — kategori sayfasında #kullanim-alanlari / #siparis-ver
            bölümü (ölçekli içerik riski, kullanıcı 2026-10-26 onayladı).
 İçerik:    gövde metninde [[slug|yazı]] veya [[slug#capa|yazı]] = iç link; kutu("tavsiye", "...") = kutucuk.
@@ -17,8 +19,9 @@ import html, json, os, re, sys, shutil
 
 KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(KOK, "_src"))
-from data import GORSEL, GERCEK, AFIS, ILCELER, SUREC, GENEL_SSS
+from data import GORSEL, GERCEK, GALERI, AFIS, ILCELER, SUREC, GENEL_SSS
 from icerik import KATEGORILER, KUR, FIYAT_TARIH
+from ilceler import ILCE, URUNLER
 
 SITE = "https://ankaradoganaytelorgu.com/"
 AD = "Doğanay Tel Örgü"
@@ -32,7 +35,7 @@ HARITA_EMBED = ("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d97974.877
                 "!2zRE_EnkFOQVkgVEVMIMOWUkfDnA!5e0!3m2!1str!2str!4v1792984681174!5m2!1str!2str")
 BUGUN = "2026-10-26"            # yayın tarihi SABİT
 BUGUN_G = "26 Ekim 2026"
-SURUM = "4"
+SURUM = "5"
 YASAK = ["en ucuz", "garanti", "1 numara", "bir numaralı", "%100", "lider", "7/24", "yılı aşkın", "yıllık tecrübe",
          "en iyi", "sigortalı", "kendi üretimimiz", "fabrikamız", "lorem"]
 
@@ -102,6 +105,7 @@ IKON = {
  "fiyat": '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
  "liste": '<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
  "yer": '<path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3zM9 4v13M15 7v13"/>',
+ "direk": '<path d="M9 21V6l3-3 3 3v15M9 10h6M9 15h6M5 21h14M12 3V1"/>',
  "sepet": '<path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 7H6M9 20h.01M18 20h.01"/>',
 }
 def ikon(ad, sinif="ikon"):
@@ -188,7 +192,7 @@ def bas(yol, title, desc, sema, ogimg=None, onyukle=None, aktif=""):
  <nav class="menu" id="menu" aria-label="Ana menü">
   {m("", "Anasayfa")}
   <div class="menu-urun{" aktif" if aktif == "urun" else ""}"><button type="button" class="mega-btn" aria-expanded="false" aria-controls="mega">Ürünler</button>{mega()}</div>
-  {m("siparis-hatti/", "Sipariş Hattı")}{m("hakkimizda/", "Hakkımızda")}{m("iletisim/", "İletişim")}
+  {m("ankara-ilceleri/", "İlçeler")}{m("siparis-hatti/", "Sipariş Hattı")}{m("hakkimizda/", "Hakkımızda")}{m("iletisim/", "İletişim")}
  </nav>
  <a class="btn btn-tur ust-cta" href="tel:{TEL}">Teklif Al</a>
  <button class="menu-btn" type="button" aria-controls="menu" aria-expanded="false" aria-label="Menüyü aç"><span></span></button>
@@ -220,7 +224,7 @@ def son():
   <p><a href="{wa()}" target="_blank" rel="noopener">WhatsApp'tan yazın</a></p>
   <address>{ADRES_G}</address>
   <p><a href="{HARITA_URL}" target="_blank" rel="noopener">Haritada aç →</a></p>
-  <p><a href="{ic('siparis-hatti/')}">Sipariş hattı</a> · <a href="{ic('hakkimizda/')}">Hakkımızda</a> · <a href="{ic('iletisim/')}">İletişim</a></p></div>
+  <p><a href="{ic('ankara-ilceleri/')}">Ankara ilçeleri</a> · <a href="{ic('siparis-hatti/')}">Sipariş hattı</a> · <a href="{ic('hakkimizda/')}">Hakkımızda</a> · <a href="{ic('iletisim/')}">İletişim</a></p></div>
 </div>
 <div class="alt-not"><div class="ic"><p>© 2026 {AD} · Fiyat bilgileri {FIYAT_TARIH} piyasa araştırmasıdır, bağlayıcı teklif değildir.</p></div></div>
 <div class="w4"><div class="w4-bag"><span class="w4-etiket">Web Tasarım:</span> <a class="w4-ad" href="https://www.web4medya.com/" target="_blank" rel="noopener">Web<span class="w4-d">4</span>Medya</a></div></div>
@@ -249,8 +253,13 @@ def kategori_kartlari(haric=None):
                   f'<span>{e(k["kisa"])}</span><span class="kart-ok">İncele →</span></span></a></li>')
     return '<ul class="kartlar">' + "".join(li) + "</ul>"
 
-def ilce_html():
-    return '<ul class="ilceler">' + "".join(f"<li>{x}</li>" for x in ILCELER) + "</ul>"
+def ilce_html(urun=None, n0=0):
+    """İlçe çipleri → ilçe sayfalarına bağlantı (ürün verilmezse ürünler sırayla döner: örümcek ağı)."""
+    li = []
+    for j, i in enumerate(ILCE):
+        u = urun or URUNLER[(n0 + j) % len(URUNLER)]
+        li.append(f'<li><a href="{ic(i["slug"] + "-" + u["ek"] + "/")}">{e(i["ad"])} {e(u["kisa"])}</a></li>')
+    return '<ul class="ilceler">' + "".join(li) + "</ul>"
 
 def harita(baslik="Doğanay Tel Örgü konumu"):
     return (f'<div class="harita"><iframe src="{HARITA_EMBED}" title="{e(baslik)}" loading="lazy" '
@@ -259,7 +268,7 @@ def harita(baslik="Doğanay Tel Örgü konumu"):
 def galeri():
     return '<ul class="galeri">' + "".join(
         f'<li><a href="{ic(f"images/g/{a}.webp")}" data-buyut><figure>{resim(a, sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 380px")}'
-        f'{altyazi(a)}</figure></a></li>' for a in GERCEK) + "</ul>"
+        f'{altyazi(a)}</figure></a></li>' for a in GALERI) + "</ul>"
 
 def bolumler(govde):
     """[(h2, html), ...] → içerik bölümleri; h2 None ise düz blok."""
@@ -433,8 +442,9 @@ def anasayfa():
   <p class="ust-etiket koyu">Hizmet bölgesi</p>
   <h2>Gölbaşı'ndan Ankara'nın ilçelerine</h2>
   <p>Atölyemiz Gölbaşı Gaziosmanpaşa'da. Gölbaşı ve çevresinin yanında Ankara'nın ilçelerinde de tel örgü ve çit
-  işi yapıyoruz. İlçenizi listede göremediyseniz arayıp sorun.</p>
+  işi yapıyoruz. İlçenize tıklayın; o ilçenin arazisine göre hazırladığımız fiyat ve uygulama sayfasına gidin.</p>
   {ilce_html()}
+  <p><a class="ok-link" href="{ic('ankara-ilceleri/')}">20 ilçede beton direk, jiletli tel ve tel örgü →</a></p>
  </div>
  <div class="kol">{harita()}
   <p class="adres">{ikon("konum", "ikon-k")} <span>{ADRES_G}</span> · <a href="{HARITA_URL}" target="_blank" rel="noopener">Yol tarifi al</a></p></div>
@@ -448,6 +458,20 @@ def anasayfa():
 </div>
 <div class="ic">{TEMSILI}</div></section>
 """ + cta_bant("Ankara'da tel örgü siparişi mi vereceksiniz?") + son()
+
+URUN_KAT = {u["kat"]: u for u in URUNLER}
+
+def ilce_bas(k):
+    u = URUN_KAT.get(k["slug"])
+    return f"İlçelere göre {u['ad'].lower()} fiyatları" if u else "Ankara'da hizmet verdiğimiz ilçeler"
+
+def ilce_fiyat_blok(k):
+    u = URUN_KAT.get(k["slug"])
+    if not u: return ""
+    li = "".join(f'<li><a href="{ic(i["slug"] + "-" + u["ek"] + "/")}">{e(i["ad"])} {e(u["ad"].lower())} fiyatları</a></li>' for i in ILCE)
+    return (f'<section class="blok acik"><div class="ic"><h2>İlçe ilçe {e(u["ad"].lower())} fiyatları ve satan yerler</h2>'
+            f'<p class="bolum-giris">Gölbaşı\'ndan Ankara\'nın 20 ilçesine sevkiyat yapıyoruz. İlçenize özel mesafe, uygulama ve fiyat notları için seçin.</p>'
+            f'<ul class="link-bulut">{li}</ul></div></section>')
 
 TEMSILI = '<p class="temsili">"Uygulamamızdan" etiketli fotoğraflar kendi işlerimizdir; diğerleri ürün türünü gösteren temsilî görsellerdir.</p>'
 
@@ -507,8 +531,9 @@ def kategori_sayfasi(k):
 
 <section class="blok acik" id="sss"><div class="ic iki">
  <div class="kol"><h2>{e(k["baslik"])} hakkında sık sorulanlar</h2>{sss_html(c["sss"])}</div>
- <div class="kol"><h2>Hizmet bölgesi</h2>
-  <p>Gölbaşı merkezli olarak Ankara'nın ilçelerinde çalışıyoruz.</p>{ilce_html()}</div>
+ <div class="kol"><h2>{ilce_bas(k)}</h2>
+  <p>Gölbaşı merkezli olarak Ankara'nın ilçelerinde çalışıyoruz. İlçenizi seçin; o ilçeye özel fiyat, sevkiyat ve uygulama
+  notlarını görün. Tümü için <a href="{ic('ankara-ilceleri/')}">Ankara ilçeleri</a> sayfasına bakın.</p>{ilce_html(URUN_KAT.get(k["slug"]), KATEGORILER.index(k))}</div>
 </div></section>
 
 <section class="blok"><div class="ic">
@@ -564,6 +589,7 @@ def fiyat_sayfasi(k):
  <h2>{e(k["baslik"])} fiyatları hakkında sık sorulanlar</h2>{sss_html(f["sss"])}
 </div></section>
 
+{ilce_fiyat_blok(k)}
 <section class="blok"><div class="ic">
  <h2>Diğer ürünlerin fiyatları</h2>
  <ul class="link-bulut">{"".join(f'<li><a href="{ic(x["slug"] + "-fiyatlari/")}">{e(x["baslik"])} fiyatları</a></li>' for x in KATEGORILER if x is not k)}</ul>
@@ -630,7 +656,7 @@ def siparis_hatti():
     ]
     sema = [isletme(), breadcrumb(adim), sss_sema(sss), {"@type": "ContactPage", "url": SITE + yol, "about": {"@id": SITE + "#isletme"}}]
     sec = "".join(f'<option>{e(k["baslik"])}</option>' for k in KATEGORILER)
-    ilc = "".join(f"<option>{x}</option>" for x in ILCELER) + "<option>Diğer</option>"
+    ilc = "".join(f"<option>{i['ad']}</option>" for i in ILCE) + "<option>Diğer</option>"
     return bas(yol, t, d, sema) + f"""
 <section class="sayfa-bas sade"><div class="desen" aria-hidden="true"></div><div class="ic">
  {iz(adim)}
@@ -742,6 +768,135 @@ def iletisim():
 """ + cta_bant() + son()
 
 
+# ------------------------------------------------------------------ ilçe × ürün sayfaları
+ISLUG = {i["slug"]: i for i in ILCE}
+ANA_CAPA = ["Ankara tel örgü", "Doğanay Tel Örgü", "Gölbaşı tel örgü", "Ankara beton direk ve tel örgü",
+            "Ankara jiletli tel ve tel örgü", "Ankara tel örgü sipariş hattı"]
+
+def ilce_yol(i, u): return f'{i["slug"]}-{u["ek"]}/'
+
+def ilce_capa(i, u, n):
+    """Aynı hedefe giden linklerde çapa metni dönsün (örümcek ağı, tekrar eden çapa yok)."""
+    k = [f'{i["ad"]} {u["ad"].lower()}', f'{i["ad"]} {u["ad"].lower()} fiyatları', f'{i["de"]} {u["ad"].lower()} satan yer',
+         f'{i["ad"]} {u["ad"].lower()} satış ve montaj']
+    return k[n % len(k)]
+
+def ilce_sayfasi(i, u):
+    yol = ilce_yol(i, u)
+    k = KSLUG[u["kat"]]
+    n = ILCE.index(i) * 3 + URUNLER.index(u)
+    t = u["title"][n % len(u["title"])].format(**i)
+    d = u["desc"].format(**i)
+    h1 = f'Ankara {i["ad"]} {u["ad"]} Fiyatları ve Satan Yerler'
+    adim = [("Anasayfa", ""), ("Ankara İlçeleri", "ankara-ilceleri/"), (f'{i["ad"]} {u["ad"]}', yol)]
+    ozel = i[u["k"]]                                     # ilçeye + ürüne özel paragraflar (ilceler.py)
+    sss = [(q.format(**i), a.format(**i)) for q, a in u["sss"]] + i.get("sss_" + u["k"], [])
+    sema = [isletme(), breadcrumb(adim), sss_sema(sss),
+            {"@type": "Service", "name": f'{i["ad"]} {u["ad"].lower()} satışı ve montajı', "serviceType": u["ad"],
+             "provider": {"@id": SITE + "#isletme"}, "url": SITE + yol,
+             "areaServed": {"@type": "AdministrativeArea", "name": f'{i["ad"]}, Ankara'}}]
+    gorsel = u["gorsel"][ILCE.index(i) % len(u["gorsel"])]
+    # aynı ilçedeki diğer ürünler + komşu ilçelerde aynı ürün + kategori kümesi + anasayfa
+    diger = "".join(f'<li><a href="{ic(ilce_yol(i, x))}">{e(ilce_capa(i, x, n + j))}</a></li>'
+                    for j, x in enumerate(URUNLER) if x is not u)
+    komsu = "".join(f'<li><a href="{ic(ilce_yol(ISLUG[s_], u))}">{e(ilce_capa(ISLUG[s_], u, n + j + 1))}</a></li>'
+                    for j, s_ in enumerate(i["komsu"]))
+    kume = (f'<li><a href="{ic(k["slug"] + "/")}">{e(k["baslik"])}</a></li>'
+            f'<li><a href="{ic(k["slug"] + "-fiyatlari/")}">{e(k["baslik"])} fiyatları {FIYAT_TARIH[-4:]}</a></li>'
+            f'<li><a href="{ic(k["slug"] + "-cesitleri/")}">{e(k["baslik"])} çeşitleri</a></li>')
+    ana = f'<a href="{ic("")}">{ANA_CAPA[n % len(ANA_CAPA)]}</a>'
+    mah = i["mahalleler"]
+    mh = "".join(f"<li>{e(m)}</li>" for m in mah)
+    veri = "".join(f"<li><b>{e(a)}:</b> {b}</li>" for a, b in i["veri"])
+    kay = " · ".join(f'<a href="{url}" target="_blank" rel="noopener nofollow">{e(ad)}</a>' for ad, url in i["kaynak"])
+    fiyat = ozet_kart(k["fiyat"]["ozet"], f'{i["ad"]} {u["ad"].lower()} fiyatları')
+    sira = u["bolum_sira"][ILCE.index(i) % len(u["bolum_sira"])]     # bölüm sırası ilçeden ilçeye değişir
+    bol = {
+     "satan": f"""<section class="yazi-bol" id="satan-yer"><h2>{e(i["de"])} {e(u["ad"].lower())} satan yer</h2>
+  {baglar(ozel["satan"])}
+  <p>Atölyemiz Gölbaşı Gaziosmanpaşa'da; {e(i["ad"])} merkezine karayoluyla yaklaşık <strong>{i["km"]}</strong>. Siparişi
+  {ana} sipariş hattından alıyor, malzemeyi kendi aracımızla getiriyoruz.</p></section>""",
+     "arazi": f"""<section class="yazi-bol" id="uygulama"><h2>{e(i["ad"])} arazisine göre {e(u["ad"].lower())} seçimi</h2>
+  {baglar(ozel["uygulama"])}</section>""",
+     "fiyat": f"""<section class="yazi-bol" id="fiyat"><h2>{e(i["ad"])} {e(u["ad"].lower())} fiyatları ({FIYAT_TARIH})</h2>
+  {baglar(ozel["fiyat"])}
+  <p>Kaynaklı tam tablo ve yurtdışı karşılaştırması: <a href="{ic(k['slug'] + '-fiyatlari/')}">{e(k["baslik"])} fiyatları</a>.</p></section>""",
+    }
+    govde = "".join(bol[x] for x in sira)
+    return bas(yol, t, d, sema, gorsel, onyukle=gorsel, aktif="urun") + sayfa_bas(
+        adim, e(h1), baglar(ozel["giris"]), gorsel, f'Merhaba, {i["ad"]} için {u["ad"].lower()} fiyatı almak istiyorum.') + f"""
+<div class="sekme-sar"><div class="ic"><nav class="sekme" aria-label="{e(i['ad'])} ürünleri">{"".join(
+    f'<a href="{ic(ilce_yol(i, x))}"{" aria-current=" + chr(34) + "page" + chr(34) if x is u else ""}>{ikon(x["ikon"])}<span>{e(i["ad"])} {e(x["ad"])}</span></a>'
+    for x in URUNLER)}<a href="{ic('ankara-ilceleri/')}">{ikon("yer")}<span>Diğer ilçeler</span></a></nav></div></div>
+
+<section class="blok"><div class="ic yazi-izgara">
+ <article class="yazi">
+  {govde}
+  <section class="yazi-bol" id="ilce"><h2>{e(i["ad"])} hakkında bilmeniz gerekenler</h2>
+   <ul class="ilce-veri">{veri}</ul>
+   <p class="kur-not">Kaynaklar: {kay}</p></section>
+  {siparis_kutu(k).replace(e(k["baslik"]) + " için net fiyat", e(i["ad"]) + " " + e(u["ad"].lower()) + " için net fiyat")}
+ </article>
+ <aside class="yan">
+  {fiyat}
+  <div class="yan-kutu"><p class="yk-bas">{e(i["ad"])} için diğer ürünler</p>
+   {"".join(f'<a href="{ic(ilce_yol(i, x))}">{ikon(x["ikon"])} {e(i["ad"])} {e(x["ad"])}</a>' for x in URUNLER if x is not u)}
+   <a href="{ic(k['slug'] + '/')}">{ikon(u["ikon"])} {e(k["baslik"])}</a>
+   <a href="{ic('siparis-hatti/')}">{ikon("sepet")} Sipariş hattı</a></div>
+ </aside>
+</div></section>
+
+<section class="blok acik" id="mahalleler"><div class="ic">
+ <h2>{e(i["ad"])} mahallelerine {e(u["ad"].lower())} sevkiyatı</h2>
+ <p class="bolum-giris">{e(i["ad"])} ilçesinde aşağıdaki mahallelerin hepsine malzeme getiriyor, istenirse montajını yapıyoruz.</p>
+ <ul class="mahalle">{mh}</ul>
+</div></section>
+
+<section class="blok" id="sss"><div class="ic iki">
+ <div class="kol"><h2>{e(i["ad"])} {e(u["ad"].lower())} hakkında sık sorulanlar</h2>{sss_html(sss)}</div>
+ <div class="kol">
+  <h2>Yakın ilçelerde {e(u["ad"].lower())}</h2><ul class="link-bulut">{komsu}</ul>
+  <h3 class="ag-bas">{e(i["ad"])} için diğer ürünler</h3><ul class="link-bulut">{diger}</ul>
+  <h3 class="ag-bas">{e(u["ad"])} rehberi</h3><ul class="link-bulut">{kume}</ul>
+ </div>
+</div></section>
+""" + cta_bant(f'{e(i["ad"])} {e(u["ad"].lower())} siparişi için arayın',
+               f'{e(i["ad"])} adresinizi, metrajı ya da adedi söyleyin; Gölbaşı\'ndan sevkiyat gününü ve net fiyatı hemen verelim.') + son()
+
+
+def ilceler_sayfasi():
+    yol = "ankara-ilceleri/"
+    t = "Ankara İlçelerinde Beton Direk, Jiletli Tel ve Tel Örgü"
+    d = ("Ankara'nın 20 ilçesinde beton direk, jiletli tel ve tel örgü fiyatları ve satan yer: ilçeye özel mesafe, arazi ve "
+         f"uygulama notları. Sipariş hattı {TEL_G}")
+    adim = [("Anasayfa", ""), ("Ankara İlçeleri", yol)]
+    sema = [isletme(), breadcrumb(adim)]
+    sat = "".join(
+        f'<tr><th scope="row">{e(i["ad"])}</th><td>{i["km"]}</td>'
+        + "".join(f'<td><a href="{ic(ilce_yol(i, u))}">{e(i["ad"])} {e(u["ad"].lower())}</a></td>' for u in URUNLER) + "</tr>"
+        for i in ILCE)
+    return bas(yol, t, d, sema) + f"""
+<section class="sayfa-bas sade"><div class="desen" aria-hidden="true"></div><div class="ic">
+ {iz(adim)}
+ <h1>Ankara İlçelerinde Beton Direk, Jiletli Tel ve Tel Örgü</h1>
+ <p class="giris">Gölbaşı'ndaki atölyemizden Ankara'nın 20 ilçesine beton direk, jiletli tel ve tel örgü getiriyor, montajını
+ yapıyoruz. İlçenizi ve ürünü seçin; o ilçenin arazisine, sanayisine ve iklimine göre hazırladığımız sayfaya gidin.</p>
+</div></section>
+
+<section class="blok"><div class="ic">
+ <div class="tablo-sar"><table class="kars-tbl ilce-tbl"><thead><tr><th scope="col">İlçe</th><th scope="col">Gölbaşı'ndan</th>
+ {"".join(f'<th scope="col">{e(u["ad"])}</th>' for u in URUNLER)}</tr></thead><tbody>{sat}</tbody></table></div>
+ <p class="kur-not">Mesafeler ilçe merkezleri arasındaki yaklaşık karayolu mesafesidir. Kızılcahamam, Çamlıdere, Elmadağ, Çubuk ve
+ Beypazarı için sipariş hattımızı arayın.</p>
+</div></section>
+
+<section class="blok acik"><div class="ic">
+ <h2>Ürünlerimiz</h2>
+ {kategori_kartlari()}
+</div></section>
+""" + cta_bant() + son()
+
+
 def sayfa_404():
     global ONEK
     ONEK = "/"
@@ -766,7 +921,7 @@ def denetle(sayfalar):
             if len(html.unescape(d)) > 165: h.append(f"description uzun ({len(html.unescape(d))}): {yol}")
         if s.count("<h1") != 1: h.append(f"h1 sayısı {s.count('<h1')}: {yol}")
         if "[[" in s: h.append(f"çözülmemiş link işareti: {yol}")
-        metin = tr_lower(html.unescape(re.sub(r"<[^>]+>", " ", s)))
+        metin = tr_lower(html.unescape(re.sub(r"<[^>]+>", " ", re.sub(r'<ul class="mahalle">.*?</ul>', "", s, flags=re.S))))  # mahalle adları (Bademlidere…) yanlış alarm
         h += [f"yasak '{y}': {yol}" for y in YASAK if y in metin]
         kimlik = set(re.findall(r'id="([^"]+)"', s))
         for href in re.findall(r'(?:href|src)="([^"]+)"', s):
@@ -810,6 +965,9 @@ def main():
         yaz(k["slug"] + "/", kategori_sayfasi, k)
         yaz(k["slug"] + "-fiyatlari/", fiyat_sayfasi, k)
         yaz(k["slug"] + "-cesitleri/", cesit_sayfasi, k)
+    for i in ILCE:
+        for u in URUNLER: yaz(ilce_yol(i, u), ilce_sayfasi, i, u)
+    yaz("ankara-ilceleri/", ilceler_sayfasi)
     yaz("siparis-hatti/", siparis_hatti); yaz("hakkimizda/", hakkimizda); yaz("iletisim/", iletisim)
     S["404.html"] = sayfa_404()
     hata = denetle(S)

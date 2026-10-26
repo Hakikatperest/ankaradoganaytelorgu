@@ -3,7 +3,7 @@ from ._ortak import kutu, liste, hesap
 K = {
  "slug": "ankara-jiletli-tel", "ad": "Jiletli Tel", "baslik": "Ankara Jiletli Tel", "ikon": "jilet",
  "kisa": "Duvar, tel örgü ve panel çit üstüne spiral ya da düzlemsel jiletli tel; depo, şantiye ve fabrika güvenliği.",
- "gorsel": "jiletli-tel", "gorsel2": "tel-cit",
+ "gorsel": "tel-cit", "gorsel2": "dikenli-tel4",
  "kat": {
   "title": "Ankara Jiletli Tel - Satış ve Montaj | Doğanay Tel Örgü",
   "desc": "Ankara jiletli tel: helezon (spiral), düzlemsel ve düz jiletli tel; duvar, tel örgü ve panel çit üstü montaj. Fiyat, çeşit, kullanım ve sipariş.",

@@ -3,7 +3,7 @@ from ._ortak import kutu, liste, hesap
 K = {
  "slug": "ankara-saha-teli", "ad": "Saha Teli", "baslik": "Ankara Saha Teli", "ikon": "saha",
  "kisa": "Halı saha, okul bahçesi, basketbol ve tenis alanı için yüksek tel örgü; top dışarı çıkmasın.",
- "gorsel": "spor-sahasi-teli", "gorsel2": "tel-orgu-doku",
+ "gorsel": "spor-sahasi-teli", "gorsel2": "okul-teli",
  "kat": {
   "title": "Ankara Saha Teli - Halı Saha Tel Örgü | Doğanay Tel Örgü",
   "desc": "Ankara saha teli: halı saha, okul bahçesi, basketbol ve tenis kortu için yüksek tel örgü ve direk sistemi. Fiyat, çeşit, kullanım ve sipariş.",

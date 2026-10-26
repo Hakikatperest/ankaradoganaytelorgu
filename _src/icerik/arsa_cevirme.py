@@ -3,7 +3,7 @@ from ._ortak import kutu, liste, hesap
 K = {
  "slug": "ankara-arsa-tarla-cevirme", "ad": "Arsa ve Tarla Çevirme", "baslik": "Ankara Arsa ve Tarla Çevirme", "ikon": "arsa",
  "kisa": "Arsa, tarla, bağ-bahçe ve şantiye çevresini tel örgü, dikenli tel ya da panel çitle çeviriyoruz.",
- "gorsel": "tel-orgu-resmi2", "gorsel2": "arsa-cevirme",
+ "gorsel": "tel-orgu-resmi2", "gorsel2": "tarlaya-tel2",
  "kat": {
   "title": "Ankara Arsa ve Tarla Çevirme - Tel Çit | Doğanay Tel Örgü",
   "desc": "Ankara arsa ve tarla çevirme: tel örgü, dikenli tel ve panel çit ile arsa, tarla, bağ-bahçe çevirme. Dönüm maliyeti, çeşitler, yasal notlar ve sipariş.",
@@ -125,7 +125,7 @@ resmi değer yok; zemin etütlerinde 80–100 cm civarı görülüyor. Kalıcı 
   "title": "Ankara Arsa ve Tarla Çevirme Çeşitleri: Hangi Çit Nereye?",
   "desc": "Arsa ve tarla çevirme çeşitleri: dikenli tel, galvaniz ve PVC tel örgü, panel çit, karma çözümler. Arazi tipine göre doğru çit seçimi.",
   "h1": "Arsa ve Tarla Çevirme Çeşitleri",
-  "gorsel": "arsa-cevirme",
+  "gorsel": "tarlaya-tel",
   "ust": "Dikenli tel mi, tel örgü mü, panel mi? Arazinizi hangi çitle çevirmeniz gerektiğini, artı ve eksileriyle anlattık.",
   "giris": [(None, "<p>Arazi çevirmede beş yaygın çözüm var. Doğru seçim; bütçeye, amaca ve arazinin görünür olup olmamasına bağlı.</p>")],
   "cesitler": [

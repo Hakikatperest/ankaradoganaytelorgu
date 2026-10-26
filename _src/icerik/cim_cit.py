@@ -3,7 +3,7 @@ from ._ortak import kutu, liste, hesap
 K = {
  "slug": "ankara-cim-cit", "ad": "Çim Çit", "baslik": "Ankara Çim Çit", "ikon": "cim",
  "kisa": "Tel örgü, panel çit ve balkon korkuluğuna yeşil gizlilik: yapay çim çit rulo satışı ve montajı.",
- "gorsel": "cim-cit-duvar", "gorsel2": "cim-cit-yol",
+ "gorsel": "bahce-teli5", "gorsel2": "tel-cim-1",
  "kat": {
   "title": "Ankara Çim Çit - Yapay Çim Çit Montajı | Doğanay Tel Örgü",
   "desc": "Ankara çim çit: tel örgü, panel çit ve balkon için yapay çim çit rulo satışı ve montajı. Fiyat, çeşit, kullanım alanları ve sipariş hattı.",
@@ -61,7 +61,7 @@ konu rüzgâr yüküdür.</p>""", "iklim"),
   "h1": "Ankara Çim Çit Fiyatları (Ekim 2026)",
   "ust": "Çim çitin 10 metrelik topu yüksekliğe göre kaç para, m²'si ne kadar, montajlı fiyat nedir? Tablo ve yurtdışı karşılaştırması burada.",
   "ozet": [
-   ("İmalatçı (m²)", "250–270 TL/m² + KDV"),
+   ("Çim çit (m²)", "270–550 TL/m²"),
    ("Montajlı", "350–550 TL/m²"),
    ("100 cm × 10 m top", "2.500–4.400 TL"),
    ("200 cm × 10 m top", "5.400–12.180 TL"),
@@ -74,13 +74,13 @@ konu rüzgâr yüküdür.</p>""", "iklim"),
    ("Çim çit", "100 cm × 10 m", "2.500–2.700 TL/top", "Ankara imalatçı listesi, Eki 2026", ""),
    ("Çim çit", "150 cm × 10 m", "4.050 TL/top", "Ankara imalatçı listesi, Eki 2026", ""),
    ("Çim çit", "200 cm × 10 m", "5.400 TL/top", "Ankara imalatçı listesi, Eki 2026", ""),
-   ("Çim çit (m²)", "—", "250–270 TL/m² + KDV", "Ankara imalatçı listesi, Eki 2026", ""),
+   ("Çim çit (m²)", "yüksekliğe ve yoğunluğa göre", "270–550 TL/m²", "Ankara piyasası, Eki 2026", ""),
    ("Çim çit montajlı", "—", "350–550 TL/m²", "Ankara imalatçı listesi, Eki 2026", ""),
    ("Msy Garden çim çit", "100 cm × 10 m", "4.399 TL/rulo", "Trendyol", "https://www.trendyol.com/cim-cit-y-s10282"),
    ("Msy Garden çim çit", "150 cm × 10 m", "6.349 TL/rulo", "Trendyol", "https://www.trendyol.com/cim-cit-y-s10282"),
    ("Telfence çim çit", "200 cm × 10 m", "12.180 TL/rulo", "Koçtaş", "https://www.koctas.com.tr/telfence-200-cm-cim-cit-10-metre/p/5000704020"),
   ],
-  "tr_son": "<p>Perakendede m² fiyatı 440–610 TL; imalatçıda 250–270 TL. Fark bazen kaliteden (lif yoğunluğu, UV katkısı), bazen "
+  "tr_son": "<p>Perakendede m² fiyatı 440–610 TL; Ankara piyasasında 270–550 TL. Fark bazen kaliteden (lif yoğunluğu, UV katkısı), bazen "
             "sadece kanaldan kaynaklanıyor. Karşılaştırırken lif yoğunluğunu ve UV bilgisini sorun.</p>",
   "yd_giris": "<p>Yurtdışında çim çit yerine genellikle yapay çit (artificial hedge) ve sarmaşık rulolar satılıyor:</p>",
   "yd": [
@@ -90,7 +90,7 @@ konu rüzgâr yüküdür.</p>""", "iklim"),
    ("Almanya", "Kunsthecke Taxus", "1,5 × 3 m", 130.89, "EUR", "adet", "Hornbach.de", "https://www.hornbach.de/s/Kunsthecke"),
   ],
   "yd_yorum": "<p>m²'ye çevirince ABD'de yapay şimşir yaklaşık <strong>1.400 TL/m²</strong>, İngiltere'de sarmaşık rulo 660–890 TL/m², "
-   "Almanya'da yapay çit yaklaşık 1.600 TL/m². Türkiye'de imalatçı fiyatı 250–270 TL/m². Yurtdışındaki ürünler çoğunlukla daha "
+   "Almanya'da yapay çit yaklaşık 1.600 TL/m². Türkiye'de ise 270–550 TL/m². Yurtdışındaki ürünler çoğunlukla daha "
    "yoğun yapraklı \"yapay çit\" sınıfında; yine de Türkiye fiyatları belirgin şekilde düşük.</p>",
   "govde": [
    ("Çim çit fiyatını ne değiştirir?", liste(
@@ -105,7 +105,7 @@ konu rüzgâr yüküdür.</p>""", "iklim"),
        ], "Malzeme ≈ 12.000 TL · montajlı ≈ 16.000–25.000 TL"), "ornek"),
   ],
   "sss": [
-   ("Çim çit m² fiyatı ne kadar?", "Ekim 2026'da imalatçı fiyatı yaklaşık 250–270 TL/m² + KDV, montajlı 350–550 TL/m²; perakendede 440–610 TL/m²."),
+   ("Çim çit m² fiyatı ne kadar?", "Ekim 2026'da Ankara piyasasında çim çit yaklaşık 270–550 TL/m²; perakende rulolarda 440–610 TL/m² görülüyor."),
    ("10 metre çim çit kaç TL?", "Yüksekliğe göre: 50 cm yaklaşık 1.400 TL, 100 cm 2.500–4.400 TL, 200 cm 5.400–12.180 TL."),
    ("Çim çit neden bu kadar farklı fiyatlarda satılıyor?", "Lif yoğunluğu, UV katkısı ve satış kanalı (imalatçı/market) fiyatı ciddi şekilde değiştiriyor."),
   ],
@@ -114,7 +114,7 @@ konu rüzgâr yüküdür.</p>""", "iklim"),
   "title": "Ankara Çim Çit Çeşitleri: Çim, Şimşir, Sarmaşık, Yükseklik",
   "desc": "Çim çit çeşitleri: yapay çim çit, şimşir ve sarmaşık yapraklı rulolar, 50-200 cm yükseklikler, lif yoğunluğu ve UV dayanımı.",
   "h1": "Ankara Çim Çit Çeşitleri",
-  "gorsel": "cim-cit-yol",
+  "gorsel": "yesil-panel-tel",
   "ust": "Çim tipi mi, şimşir mi, sarmaşık mı? Hangi yükseklik, hangi yoğunluk? Çim çit çeşitlerini anlattık.",
   "giris": [(None, "<p>Çim çitler görünüm, yükseklik ve lif yoğunluğuna göre ayrılıyor. Seçim yaparken bir de UV dayanımını sorun.</p>")],
   "cesitler": [

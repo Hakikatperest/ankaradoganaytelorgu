@@ -3,7 +3,7 @@ from ._ortak import kutu, liste, hesap
 K = {
  "slug": "ankara-dikenli-tel", "ad": "Dikenli Tel", "baslik": "Ankara Dikenli Tel", "ikon": "diken",
  "kisa": "Tarla, mera ve arsa sınırı için gergin dikenli tel; tel örgü ve duvar üstüne ek sıra.",
- "gorsel": "tel-orgu-resmi", "gorsel2": "dikenli-tel-tarla",
+ "gorsel": "tel-orgu-resmi", "gorsel2": "dikenli-tel2",
  "kat": {
   "title": "Ankara Dikenli Tel - Satış ve Çekim | Doğanay Tel Örgü",
   "desc": "Ankara dikenli tel: galvaniz dikenli tel satışı ve çekimi, tarla, mera, arsa sınırı, tel örgü ve duvar üstü. Fiyat, çeşit, kullanım ve sipariş.",
