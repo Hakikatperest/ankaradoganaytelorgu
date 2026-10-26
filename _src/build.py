@@ -35,7 +35,7 @@ HARITA_EMBED = ("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d97974.877
                 "!2zRE_EnkFOQVkgVEVMIMOWUkfDnA!5e0!3m2!1str!2str!4v1792984681174!5m2!1str!2str")
 BUGUN = "2026-10-26"            # yayın tarihi SABİT
 BUGUN_G = "26 Ekim 2026"
-SURUM = "5"
+SURUM = "6"
 YASAK = ["en ucuz", "garanti", "1 numara", "bir numaralı", "%100", "lider", "7/24", "yılı aşkın", "yıllık tecrübe",
          "en iyi", "sigortalı", "kendi üretimimiz", "fabrikamız", "lorem"]
 

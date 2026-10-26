@@ -446,3 +446,8 @@ address{font-style:normal}
 .ilce-tbl{min-width:640px}
 .ilce-tbl a{color:var(--lac-3);font-weight:600}
 .ilce-tbl td:nth-child(2){white-space:nowrap;color:var(--soluk)}
+/* hero rozetleri bağlantı oldu (2026-10-26): beyaz, altı çizgisiz, tüm alan tıklanır */
+.hero-rozet li{padding:0}
+.hero-rozet a{display:flex;align-items:center;gap:8px;padding:8px 14px;color:#fff;text-decoration:none;border-radius:40px;transition:background .2s,color .2s}
+.hero-rozet a:hover{background:rgba(255,121,0,.18);color:#fff}
+.hero-rozet li:has(a:hover){border-color:var(--tur)}
