@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /_src/
+Disallow: /img/
+
+Sitemap: https://ankaradoganaytelorgu.com/sitemap.xml
