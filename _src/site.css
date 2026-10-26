@@ -417,3 +417,9 @@ address{font-style:normal}
 }
 .yan .cerceve::before{display:none}
 .btn{font-family:inherit}
+/* mobil taşma düzeltmesi (2026-10-26): tek sütunda ızgara içeriğe göre genişlemesin */
+@media (max-width:960px){.yazi-izgara{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:860px){.iki{grid-template-columns:minmax(0,1fr)}}
+.hesap table{table-layout:fixed}
+.hesap td:last-child{white-space:normal;width:42%}
+@media (max-width:520px){.hesap td{display:block;width:auto!important;text-align:left!important;padding-left:0!important}.hesap td:first-child{border:0;padding-bottom:0;color:var(--soluk);font-size:.9rem}.hesap tr{display:block;border-bottom:1px solid var(--cizgi);padding:6px 0}.hesap td:last-child{border:0}}
