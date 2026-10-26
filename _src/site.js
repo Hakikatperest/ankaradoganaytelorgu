@@ -12,6 +12,34 @@
     });
   }
 
+  // ürünler mega menüsü: dokunmatik ve mobilde tıklayınca aç/kapa
+  var mb = document.querySelector(".mega-btn");
+  if (mb) {
+    mb.addEventListener("click", function () {
+      var k = mb.parentNode, ac = k.classList.toggle("acik");
+      mb.setAttribute("aria-expanded", ac ? "true" : "false");
+    });
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest(".menu-urun")) { mb.parentNode.classList.remove("acik"); mb.setAttribute("aria-expanded", "false"); }
+    });
+  }
+
+  // sipariş formu → hazır WhatsApp mesajı (hiçbir yere kaydedilmez)
+  var sf = document.getElementById("siparis-form");
+  if (sf) {
+    sf.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var f = sf.elements, sat = ["Merhaba, Doğanay Tel Örgü sipariş hattı için yazıyorum."];
+      sat.push("Ürün: " + f.urun.value);
+      if (f.metraj.value) sat.push("Metraj: " + f.metraj.value);
+      if (f.yukseklik.value) sat.push("Yükseklik: " + f.yukseklik.value);
+      sat.push("İlçe: " + f.ilce.value);
+      sat.push("Montaj: " + f.montaj.value);
+      if (f.not.value) sat.push("Not: " + f.not.value);
+      window.open("https://wa.me/" + sf.getAttribute("data-wa") + "?text=" + encodeURIComponent(sat.join("\n")), "_blank", "noopener");
+    });
+  }
+
   // alt çubuk: sayfa dibinde (imza bandı) gizlenir, imza tıklanabilir kalsın
   var dock = document.getElementById("dock");
   if (dock) {

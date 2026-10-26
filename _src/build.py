@@ -2,8 +2,13 @@
 """Doğanay Tel Örgü — ankaradoganaytelorgu.com statik site üreticisi.
 
 Çalıştır:  python3 _src/build.py   (herhangi bir dizinden)
-Girdi:     _src/data.py (hizmetler, SSS, görseller), img/stok/*.jpg (Unsplash, temsili), images/*.webp (kullanıcı)
-Çıktı:     index.html, /<hizmet>/ × 7, /hakkimizda/, /iletisim/, 404.html, sitemap.xml, robots.txt, assets/, images/g + images/k türevleri
+Girdi:     _src/data.py (görseller, ilçeler, süreç, genel SSS), _src/icerik/*.py (9 kategori: kategori + fiyat + çeşit),
+           img/stok/*.jpg (Unsplash, temsili), images/*.webp (kullanıcının gerçek fotoğrafları)
+Çıktı:     index.html, /<kategori>/ × 9, /<kategori>-fiyatlari/ × 9, /<kategori>-cesitleri/ × 9, /siparis-hatti/,
+           /hakkimizda/, /iletisim/, 404.html, sitemap.xml, robots.txt, assets/, images/g + images/k türevleri
+Yapı:      "Kullanım Alanları" ve "Sipariş Ver" ayrı sayfa DEĞİL — kategori sayfasında #kullanim-alanlari / #siparis-ver
+           bölümü (ölçekli içerik riski, kullanıcı 2026-10-26 onayladı).
+İçerik:    gövde metninde [[slug|yazı]] veya [[slug#capa|yazı]] = iç link; kutu("tavsiye", "...") = kutucuk.
 Denetim:   yasak ifade, kırık iç link, tekrar eden title/description, uzunluk → HATA, dosya yazılmaz.
 İç yollar sayfa derinliğine göre GÖRELİ (Pages alt yol önizlemesi kırılmasın); canonical/sitemap mutlak.
 ⛔ HTML'i elle düzenleme — buradan üret.
@@ -12,7 +17,8 @@ import html, json, os, re, sys, shutil
 
 KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(KOK, "_src"))
-from data import GORSEL, GERCEK, AFIS, HIZMETLER, ILCELER, SUREC, GENEL_SSS
+from data import GORSEL, GERCEK, AFIS, ILCELER, SUREC, GENEL_SSS
+from icerik import KATEGORILER, KUR, FIYAT_TARIH
 
 SITE = "https://ankaradoganaytelorgu.com/"
 AD = "Doğanay Tel Örgü"
@@ -25,16 +31,27 @@ HARITA_EMBED = ("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d97974.877
                 "!3d39.88062313067494!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14d3417ef65e64f3%3A0xa5199524e2415ed8"
                 "!2zRE_EnkFOQVkgVEVMIMOWUkfDnA!5e0!3m2!1str!2str!4v1792984681174!5m2!1str!2str")
 BUGUN = "2026-10-26"            # yayın tarihi SABİT
-SURUM = "1"
+BUGUN_G = "26 Ekim 2026"
+SURUM = "2"
 YASAK = ["en ucuz", "garanti", "1 numara", "bir numaralı", "%100", "lider", "7/24", "yılı aşkın", "yıllık tecrübe",
-         "en iyi", "sigortalı", "kendi üretimimiz", "fabrikamız"]
+         "en iyi", "sigortalı", "kendi üretimimiz", "fabrikamız", "lorem"]
 
 e = html.escape
 ONEK = ""
 def ic(y): return (ONEK + y) if y else (ONEK or "./")
 def tr_lower(s): return s.replace("I", "ı").replace("İ", "i").lower()
+def tl(n): return f"{n:,.0f}".replace(",", ".")
 
-HSLUG = {h["slug"]: h for h in HIZMETLER}
+KSLUG = {k["slug"]: k for k in KATEGORILER}
+
+def baglar(s):
+    """[[slug|yazı]] / [[slug#capa|yazı]] → göreli iç link."""
+    def r(m):
+        hedef, yazi = m.group(1), m.group(2)
+        yol, _, capa = hedef.partition("#")
+        href = (ic(yol + "/") if yol else ic("")) + (("#" + capa) if capa else "")
+        return f'<a href="{href}">{yazi}</a>'
+    return re.sub(r"\[\[([a-z0-9#/-]*)\|([^\]]+)\]\]", r, s)
 
 # ------------------------------------------------------------------ görseller
 OLCU = {}
@@ -48,8 +65,7 @@ def gorselleri_hazirla():
     for d in ("images/g", "images/k"): os.makedirs(os.path.join(KOK, d), exist_ok=True)
     for ad in GORSEL:
         k = kaynak(ad)
-        hedef = {"g": (1600, 82), "k": (640, 74)}
-        for d, (w, q) in hedef.items():
+        for d, (w, q) in {"g": (1600, 82), "k": (640, 74)}.items():
             t = os.path.join(KOK, f"images/{d}/{ad}.webp")
             if not os.path.exists(t) or os.path.getmtime(t) < os.path.getmtime(k):
                 im = ImageOps.exif_transpose(Image.open(k)).convert("RGB"); im.thumbnail((w, 2400), Image.LANCZOS)
@@ -64,23 +80,35 @@ def resim(ad, sinif="", yukle="lazy", sizes="(max-width: 760px) 100vw, 50vw"):
             f'srcset="{ic(f"images/k/{ad}.webp")} 640w, {ic(f"images/g/{ad}.webp")} {w}w" sizes="{sizes}" '
             f'width="{w}" height="{h}" alt="{e(GORSEL[ad])}" loading="{yukle}"{FP if yukle == "eager" else ""} decoding="async">')
 
+def altyazi(ad):
+    return f'<figcaption>{"<b>Uygulamamızdan:</b> " if ad in GERCEK else ""}{e(GORSEL[ad])}</figcaption>'
+
+def figur(ad, sizes="(max-width: 760px) 100vw, 560px"):
+    return f'<figure class="cerceve">{resim(ad, sizes=sizes)}{altyazi(ad)}</figure>'
+
 # ------------------------------------------------------------------ ikonlar (çizgi, currentColor)
 IKON = {
  "orgu": '<path d="M3 3l18 18M3 9l12 12M3 15l6 6M9 3l12 12M15 3l6 6M21 3L3 21M21 9L9 21M21 15l-6 6M15 3L3 15M9 3L3 9"/>',
+ "kafes": '<path d="M6 3l-3 5 3 5-3 5 3 3M12 3L9 8l3 5-3 5 3 3M18 3l-3 5 3 5-3 5 3 3M3 8h18M3 13h18M3 18h18"/>',
  "panel": '<path d="M3 4v17M21 4v17M3 7h18M3 18h18M7.5 7v11M12 7v11M16.5 7v11"/>',
  "jilet": '<circle cx="7" cy="12" r="4"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="12" r="4"/><path d="M2 12h20"/>',
  "diken": '<path d="M2 9h20M2 15h20M7 7l2 4M9 7l-2 4M15 13l2 4M17 13l-2 4"/>',
+ "cim": '<path d="M3 21V9M7 21V6M11 21V8M15 21V5M19 21V7M3 21h18M3 9c1-2 2-2 4-3M11 8c1-2 2-2 4-3M15 5c2 0 3 1 4 2"/>',
  "kapi": '<path d="M3 21V4M21 21V4M3 5h8.5v15H3M12.5 5H21v15h-8.5M10 12.5h1M13 12.5h1"/>',
  "arsa": '<path d="M3 20l5-9 4 5 3-4 6 8zM3 20h18M17 7a2 2 0 1 0 0-.01"/>',
  "saha": '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M12 5v14M3 9h3v6H3M21 9h-3v6h3"/><circle cx="12" cy="12" r="2.2"/>',
  "tel": '<path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1Z"/>',
  "konum": '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+ "fiyat": '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+ "liste": '<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+ "yer": '<path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3zM9 4v13M15 7v13"/>',
+ "sepet": '<path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 7H6M9 20h.01M18 20h.01"/>',
 }
 def ikon(ad, sinif="ikon"):
     return f'<svg class="{sinif}" viewBox="0 0 24 24" aria-hidden="true">{IKON[ad]}</svg>'
 WA_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3Z"/></svg>')
 
-def wa(metin="Merhaba, tel örgü için bilgi almak istiyorum."):
+def wa(metin="Merhaba, Doğanay Tel Örgü sipariş hattı için yazıyorum."):
     return f"https://wa.me/{WA}?text={e(metin)}"
 
 # ------------------------------------------------------------------ şema
@@ -89,10 +117,9 @@ def isletme():
             "telephone": TEL, "image": SITE + "images/logo-kare.jpg", "logo": SITE + "images/logo-512.png",
             "address": {"@type": "PostalAddress", "streetAddress": ADRES["sokak"], "postalCode": ADRES["pk"],
                         "addressLocality": ADRES["ilce"], "addressRegion": ADRES["il"], "addressCountry": "TR"},
-            "hasMap": HARITA_URL,
-            "areaServed": [{"@type": "City", "name": "Ankara"}],
-            "makesOffer": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": h["baslik"],
-                            "url": SITE + h["slug"] + "/"}} for h in HIZMETLER]}
+            "hasMap": HARITA_URL, "areaServed": [{"@type": "City", "name": "Ankara"}],
+            "makesOffer": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": k["baslik"],
+                            "url": SITE + k["slug"] + "/"}} for k in KATEGORILER]}
 
 def breadcrumb(adimlar):
     return {"@type": "BreadcrumbList", "itemListElement": [
@@ -100,21 +127,33 @@ def breadcrumb(adimlar):
 
 def sss_sema(sss):
     return {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": s,
-            "acceptedAnswer": {"@type": "Answer", "text": c}} for s, c in sss]}
+            "acceptedAnswer": {"@type": "Answer", "text": re.sub(r"<[^>]+>", "", baglar(c).replace("[[", ""))}} for s, c in sss]}
+
+def makale(t, yol, gorsel):
+    return {"@type": "Article", "headline": t, "datePublished": BUGUN, "dateModified": BUGUN, "inLanguage": "tr",
+            "author": {"@id": SITE + "#isletme"}, "publisher": {"@id": SITE + "#isletme"},
+            "image": SITE + f"images/g/{gorsel}.webp", "mainEntityOfPage": SITE + yol}
 
 # ------------------------------------------------------------------ iskelet
-MENU = [("", "Anasayfa"), ("ankara-tel-orgu/", "Tel Örgü"), ("panel-cit/", "Panel Çit"),
-        ("jiletli-tel/", "Jiletli Tel"), ("#hizmetler", "Tüm Hizmetler"), ("hakkimizda/", "Hakkımızda"), ("iletisim/", "İletişim")]
+def mega():
+    kol = []
+    for k in KATEGORILER:
+        s = k["slug"]
+        kol.append(f'<div class="mega-kol"><a class="mega-bas" href="{ic(s + "/")}">{ikon(k["ikon"])}<span>{e(k["baslik"])}</span></a>'
+                   f'<a href="{ic(s + "-fiyatlari/")}">{e(k["baslik"])} Fiyatları</a>'
+                   f'<a href="{ic(s + "-cesitleri/")}">{e(k["baslik"])} Çeşitleri</a>'
+                   f'<a href="{ic(s + "/")}#kullanim-alanlari">Kullanım Alanları</a>'
+                   f'<a href="{ic(s + "/")}#siparis-ver">Sipariş Ver</a></div>')
+    return '<div class="mega" id="mega">' + "".join(kol) + "</div>"
 
-def bas(yol, title, desc, sema, ogimg=None, onyukle=None):
+def bas(yol, title, desc, sema, ogimg=None, onyukle=None, aktif=""):
     url = SITE + yol
     og = f"{SITE}images/g/{ogimg}.webp" if ogimg else f"{SITE}images/logo-kare.jpg"
     ow, oh = OLCU[ogimg] if ogimg else (630, 630)
     pre = (f'\n<link rel="preload" as="image" href="{ic(f"images/g/{onyukle}.webp")}" imagesrcset="{ic(f"images/k/{onyukle}.webp")} 640w, '
            f'{ic(f"images/g/{onyukle}.webp")} {OLCU[onyukle][0]}w" imagesizes="100vw" fetchpriority="high">' if onyukle else "")
     ac = ' aria-current="page"'
-    menu = "".join(f'<a href="{ic("") + h if h.startswith("#") else ic(h)}"{ac if h == yol else ""}>{a}</a>'
-                   for h, a in MENU)
+    def m(h, a): return f'<a href="{ic(h)}"{ac if h == yol else ""}>{a}</a>'
     return f"""<!doctype html>
 <html lang="tr">
 <head>
@@ -142,43 +181,51 @@ def bas(yol, title, desc, sema, ogimg=None, onyukle=None):
 <body>
 <div class="ust-serit"><div class="ic">
  <span>{ikon("konum", "ikon-k")} Gölbaşı / Ankara</span>
- <a href="tel:{TEL}">{ikon("tel", "ikon-k")} {TEL_G}</a>
+ <a href="tel:{TEL}">{ikon("tel", "ikon-k")} Sipariş hattı: {TEL_G}</a>
 </div></div>
 <header class="ust"><div class="ic">
  <a class="logo" href="{ic('')}" aria-label="{AD} anasayfa"><img src="{ic('images/logo-amblem.png')}" width="240" height="178" alt="" decoding="async"><span class="logo-yazi"><b>DOĞANAY</b><small>TEL ÖRGÜ</small></span></a>
- <nav class="menu" id="menu" aria-label="Ana menü">{menu}</nav>
+ <nav class="menu" id="menu" aria-label="Ana menü">
+  {m("", "Anasayfa")}
+  <div class="menu-urun{" aktif" if aktif == "urun" else ""}"><button type="button" class="mega-btn" aria-expanded="false" aria-controls="mega">Ürünler</button>{mega()}</div>
+  {m("siparis-hatti/", "Sipariş Hattı")}{m("hakkimizda/", "Hakkımızda")}{m("iletisim/", "İletişim")}
+ </nav>
  <a class="btn btn-tur ust-cta" href="tel:{TEL}">Teklif Al</a>
  <button class="menu-btn" type="button" aria-controls="menu" aria-expanded="false" aria-label="Menüyü aç"><span></span></button>
 </div></header>
 <main>
 """
 
-def cta_bant(baslik="Metrajı söyleyin, keşfe gelelim", alt="Alanın yeri, yaklaşık uzunluğu ve ne için çevirmek istediğinizi anlatın; gerisini birlikte planlayalım."):
+def cta_bant(baslik="Sipariş ve keşif için Doğanay Tel Örgü sipariş hattı",
+             alt="Ürünü, metrajı ve yüksekliği söyleyin; Ankara'da net fiyatı ve teslim gününü birlikte belirleyelim."):
     return f"""<section class="cta"><div class="ic">
  <div class="cta-metin"><h2>{baslik}</h2><p>{alt}</p></div>
  <div class="dugmeler"><a class="btn btn-tur" href="tel:{TEL}">{ikon("tel", "ikon-b")} {TEL_G}</a>
- <a class="btn btn-cizgi" href="{wa()}" target="_blank" rel="noopener">{WA_SVG} WhatsApp'tan yaz</a></div>
+ <a class="btn btn-cizgi" href="{wa()}" target="_blank" rel="noopener">{WA_SVG} WhatsApp'tan sipariş</a></div>
 </div></section>"""
 
 def son():
-    hz = "".join(f'<li><a href="{ic(h["slug"] + "/")}">{e(h["baslik"])}</a></li>' for h in HIZMETLER)
+    kat = "".join(f'<li><a href="{ic(k["slug"] + "/")}">{e(k["baslik"])}</a></li>' for k in KATEGORILER)
+    fiy = "".join(f'<li><a href="{ic(k["slug"] + "-fiyatlari/")}">{e(k["baslik"])} Fiyatları</a></li>' for k in KATEGORILER)
     return f"""</main>
 <footer class="alt"><div class="ic alt-izgara">
  <div class="alt-kol">
   <img class="alt-logo" src="{ic('images/logo-tam.png')}" width="640" height="550" alt="{AD} logosu" loading="lazy" decoding="async">
+  <p class="alt-kisa">Gölbaşı'nda tel örgü, dikenli tel, kafes tel, panel çit, jiletli tel ve çim çit satışı ve montajı.</p>
  </div>
- <div class="alt-kol"><p class="alt-bas">Hizmetler</p><ul>{hz}</ul></div>
- <div class="alt-kol"><p class="alt-bas">İletişim</p>
+ <div class="alt-kol"><p class="alt-bas">Ürünler</p><ul>{kat}</ul></div>
+ <div class="alt-kol"><p class="alt-bas">Fiyatlar {FIYAT_TARIH}</p><ul>{fiy}</ul></div>
+ <div class="alt-kol"><p class="alt-bas">Sipariş Hattı</p>
   <p><a class="alt-tel" href="tel:{TEL}">{TEL_G}</a></p>
   <p><a href="{wa()}" target="_blank" rel="noopener">WhatsApp'tan yazın</a></p>
   <address>{ADRES_G}</address>
   <p><a href="{HARITA_URL}" target="_blank" rel="noopener">Haritada aç →</a></p>
-  <p><a href="{ic('hakkimizda/')}">Hakkımızda</a> · <a href="{ic('iletisim/')}">İletişim</a></p></div>
+  <p><a href="{ic('siparis-hatti/')}">Sipariş hattı</a> · <a href="{ic('hakkimizda/')}">Hakkımızda</a> · <a href="{ic('iletisim/')}">İletişim</a></p></div>
 </div>
-<div class="alt-not"><div class="ic"><p>© 2026 {AD} · Ankara tel örgü, panel çit, jiletli ve dikenli tel</p></div></div>
+<div class="alt-not"><div class="ic"><p>© 2026 {AD} · Fiyat bilgileri {FIYAT_TARIH} piyasa araştırmasıdır, bağlayıcı teklif değildir.</p></div></div>
 <div class="w4"><div class="w4-bag"><span class="w4-etiket">Web Tasarım:</span> <a class="w4-ad" href="https://www.web4medya.com/" target="_blank" rel="noopener">Web<span class="w4-d">4</span>Medya</a></div></div>
 </footer>
-<div class="dock" id="dock"><a class="dock-tel" href="tel:{TEL}"><small>Hemen arayın</small><span>{TEL_G}</span></a>
+<div class="dock" id="dock"><a class="dock-tel" href="tel:{TEL}"><small>Sipariş hattı</small><span>{TEL_G}</span></a>
 <a class="dock-wa" href="{wa()}" target="_blank" rel="noopener" aria-label="WhatsApp'tan yaz">{WA_SVG}</a></div>
 <script src="{ic('assets/site.js')}?v={SURUM}" defer></script>
 </body>
@@ -190,20 +237,17 @@ def iz(adimlar):
     return '<nav class="iz" aria-label="Konum">' + ' <span aria-hidden="true">›</span> '.join(p) + '</nav>'
 
 def sss_html(sss):
-    return '<div class="sss">' + "".join(f"<details><summary>{e(s)}</summary><p>{e(c)}</p></details>" for s, c in sss) + "</div>"
+    return '<div class="sss">' + "".join(f"<details><summary>{e(s)}</summary><p>{baglar(c)}</p></details>" for s, c in sss) + "</div>"
 
-def hizmet_kartlari(haric=None):
+def kategori_kartlari(haric=None):
     li = []
-    for h in HIZMETLER:
-        if h is haric: continue
-        li.append(f'<li class="kart"><a href="{ic(h["slug"] + "/")}"><span class="kart-gorsel">'
-                  f'{resim(h["gorsel"], sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 380px")}</span>'
-                  f'<span class="kart-govde"><span class="kart-ikon">{ikon(h["ikon"])}</span><b>{e(h["baslik"])}</b>'
-                  f'<span>{e(h["kisa"])}</span><span class="kart-ok">Detaylar →</span></span></a></li>')
+    for k in KATEGORILER:
+        if k is haric: continue
+        li.append(f'<li class="kart"><a href="{ic(k["slug"] + "/")}"><span class="kart-gorsel">'
+                  f'{resim(k["gorsel"], sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 300px")}</span>'
+                  f'<span class="kart-govde"><span class="kart-ikon">{ikon(k["ikon"])}</span><b>{e(k["baslik"])}</b>'
+                  f'<span>{e(k["kisa"])}</span><span class="kart-ok">İncele →</span></span></a></li>')
     return '<ul class="kartlar">' + "".join(li) + "</ul>"
-
-def surec_html():
-    return '<ol class="surec">' + "".join(f"<li><h3>{a}</h3><p>{p}</p></li>" for a, p in SUREC) + "</ol>"
 
 def ilce_html():
     return '<ul class="ilceler">' + "".join(f"<li>{x}</li>" for x in ILCELER) + "</ul>"
@@ -212,49 +256,147 @@ def harita(baslik="Doğanay Tel Örgü konumu"):
     return (f'<div class="harita"><iframe src="{HARITA_EMBED}" title="{e(baslik)}" loading="lazy" '
             f'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>')
 
-TEMSILI = '<p class="temsili">"Uygulamamızdan" etiketli fotoğraflar kendi işlerimizdir; diğerleri uygulama türünü gösteren temsilî görsellerdir.</p>'
-
-def altyazi(ad):
-    return (f'<figcaption>{"<b>Uygulamamızdan:</b> " if ad in GERCEK else ""}{e(GORSEL[ad])}</figcaption>')
-
 def galeri():
     return '<ul class="galeri">' + "".join(
         f'<li><a href="{ic(f"images/g/{a}.webp")}" data-buyut><figure>{resim(a, sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 380px")}'
         f'{altyazi(a)}</figure></a></li>' for a in GERCEK) + "</ul>"
+
+def bolumler(govde):
+    """[(h2, html), ...] → içerik bölümleri; h2 None ise düz blok."""
+    out = []
+    for b in govde:
+        h2, icerik = b[0], b[1]
+        kimlik = f' id="{b[2]}"' if len(b) > 2 else ""
+        out.append(f'<section class="yazi-bol"{kimlik}>' + (f"<h2>{h2}</h2>" if h2 else "") + baglar(icerik) + "</section>")
+    return "".join(out)
+
+def icindekiler(govde, ek=(), on=()):
+    li = list(on) + [(b[0], b[2]) for b in govde if b[0] and len(b) > 2] + list(ek)
+    if len(li) < 3: return ""
+    return ('<nav class="icindekiler" aria-label="İçindekiler"><p class="ic-bas">Bu sayfada</p><ol>' +
+            "".join(f'<li><a href="#{c}">{re.sub(r"<[^>]+>", "", h)}</a></li>' for h, c in li) + "</ol></nav>")
+
+def alt_sekme(k, aktif):
+    s = k["slug"]
+    sek = [("kategori", f"{s}/", k["baslik"], k["ikon"]), ("fiyat", f"{s}-fiyatlari/", "Fiyatları", "fiyat"),
+           ("cesit", f"{s}-cesitleri/", "Çeşitleri", "liste"), ("kullanim", f"{s}/#kullanim-alanlari", "Kullanım Alanları", "yer"),
+           ("siparis", f"{s}/#siparis-ver", "Sipariş Ver", "sepet")]
+    out = []
+    for kod, yol, ad, ik in sek:
+        y, _, c = yol.partition("#")
+        href = ic(y) + (("#" + c) if c else "")
+        ac = ' aria-current="page"' if kod == aktif else ""
+        out.append(f'<a href="{href}"{ac}>{ikon(ik)}<span>{e(ad)}</span></a>')
+    return '<nav class="sekme" aria-label="' + e(k["baslik"]) + ' sayfaları">' + "".join(out) + "</nav>"
+
+def sayfa_bas(adim, h1, giris, gorsel, wa_metin, ek=""):
+    return f"""<section class="sayfa-bas"><div class="sb-fon" aria-hidden="true">{resim(gorsel, "kb", "eager", "100vw")}</div>
+<div class="desen" aria-hidden="true"></div>
+<div class="ic">
+ {iz(adim)}
+ <h1>{h1}</h1>
+ <p class="giris">{giris}</p>
+ <div class="dugmeler"><a class="btn btn-tur" href="tel:{TEL}">{ikon("tel", "ikon-b")} Sipariş: {TEL_G}</a>
+ <a class="btn btn-cizgi" href="{wa(wa_metin)}" target="_blank" rel="noopener">{WA_SVG} WhatsApp</a></div>
+ {ek}
+</div></section>"""
+
+def siparis_kutu(k):
+    return f"""<aside class="siparis-kutu">
+ <div><p class="ust-etiket koyu">Doğanay Tel Örgü sipariş hattı</p>
+ <p class="sk-bas">{e(k["baslik"])} için net fiyat ve teslim günü</p>
+ <p>Piyasa rakamları fikir versin diye burada. Sizin işinizin fiyatı metraja, yüksekliğe ve zemine göre çıkıyor; telefonda
+ birkaç soruyla netleştiriyoruz.</p></div>
+ <div class="dugmeler"><a class="btn btn-tur" href="tel:{TEL}">{ikon("tel", "ikon-b")} {TEL_G}</a>
+ <a class="btn btn-wa" href="{wa(f'Merhaba, {k["baslik"]} için fiyat almak istiyorum.')}" target="_blank" rel="noopener">{WA_SVG} WhatsApp</a></div>
+</aside>"""
+
+# ------------------------------------------------------------------ fiyat tabloları
+def tr_tablo(satirlar):
+    def kay(ka, url):
+        return f'<a href="{url}" target="_blank" rel="noopener nofollow">{e(ka)}</a>' if url else e(ka)
+    g = "".join(f'<tr><th scope="row">{e(u)}</th><td data-l="Ölçü">{e(o)}</td><td class="tutar" data-l="Fiyat">{e(f)}</td>'
+                f'<td class="kaynak" data-l="Kaynak">{kay(ka, url)}</td></tr>' for u, o, f, ka, url in satirlar)
+    return (f'<div class="tablo-sar"><table class="fiyat-tbl kartli"><thead><tr><th scope="col">Ürün</th><th scope="col">Ölçü / özellik</th>'
+            f'<th scope="col">Fiyat</th><th scope="col">Kaynak</th></tr></thead><tbody>{g}</tbody></table></div>')
+
+def yd_tablo(satirlar):
+    g = []
+    for ulke, u, o, tutar, para, birim, ka, url in satirlar:
+        isaret = {"USD": "$", "EUR": "€", "GBP": "£"}[para]
+        if isinstance(tutar, tuple):
+            yerel = f"{isaret}{tutar[0]:,.2f}–{isaret}{tutar[1]:,.2f}"
+            tlk = f"≈ {tl(tutar[0] * KUR[para][0])}–{tl(tutar[1] * KUR[para][0])} TL"
+        else:
+            yerel = f"{isaret}{tutar:,.2f}"; tlk = f"≈ {tl(tutar * KUR[para][0])} TL"
+        g.append(f'<tr><th scope="row">{e(ulke)}</th><td data-l="Ürün">{e(u)}<small>{e(o)}</small></td><td class="tutar" data-l="Yerel">{yerel}<small>{e(birim)}</small></td>'
+                 f'<td class="tutar tl" data-l="TL">{tlk}</td><td class="kaynak" data-l="Kaynak"><a href="{url}" target="_blank" rel="noopener nofollow">{e(ka)}</a></td></tr>')
+    return (f'<div class="tablo-sar"><table class="fiyat-tbl kartli"><thead><tr><th scope="col">Ülke</th><th scope="col">Ürün</th>'
+            f'<th scope="col">Yerel fiyat</th><th scope="col">TL karşılığı</th><th scope="col">Kaynak</th></tr></thead>'
+            f'<tbody>{"".join(g)}</tbody></table></div>')
+
+def kur_notu():
+    return ('<p class="kur-not">TL karşılıkları ' + ", ".join(f"1 {p} = {v:.2f} TL" for p, (v, _) in KUR.items()) +
+            f' kuruyla hesaplandı ({KUR["USD"][1]}). Yurtdışı fiyatlarına KDV/satış vergisi ülkeye göre dahil ya da hariç olabilir.</p>')
+
+def ozet_kart(ozet, baslik):
+    g = "".join(f'<li><span>{e(a)}</span><b>{e(b)}</b></li>' for a, b in ozet)
+    return f'<div class="ozet-kart"><p class="ozet-bas">{baslik}</p><ul>{g}</ul><p class="ozet-not">Ankara, {FIYAT_TARIH} · KDV dahil perakende/piyasa aralığı</p></div>'
+
+def karsilastirma(tablo):
+    bas_, *sat = tablo
+    th = "".join(f'<th scope="col">{e(x)}</th>' for x in bas_)
+    tr = "".join("<tr>" + f'<th scope="row">{e(r[0])}</th>' + "".join(f"<td>{e(x)}</td>" for x in r[1:]) + "</tr>" for r in sat)
+    return f'<div class="tablo-sar"><table class="kars-tbl"><thead><tr>{th}</tr></thead><tbody>{tr}</tbody></table></div>'
 
 # ------------------------------------------------------------------ sayfalar
 HERO = "beton-direk-ve-tel-orgu"
 
 def anasayfa():
     t = f"Ankara Tel Örgü - {TEL_G} | Doğanay Tel Örgü Gölbaşı"
-    d = ("Ankara tel örgü, panel çit, jiletli ve dikenli tel montajı. Gölbaşı'ndaki Doğanay Tel Örgü ile arsa, bahçe, "
-         f"site ve saha çevirme. Keşif için: {TEL_G}")
+    d = ("Ankara tel örgü, dikenli tel, kafes tel, panel çit, jiletli tel ve çim çit: 2026 fiyatları, çeşitleri ve montaj. "
+         f"Doğanay Tel Örgü sipariş hattı: {TEL_G}")
     sss = [
-     ("Ankara'da tel örgü yaptırmak için kime ulaşabilirim?",
-      f"Doğanay Tel Örgü'ye {TEL_G} numarasından ulaşabilirsiniz. Aynı numaraya WhatsApp'tan da yazabilirsiniz."),
+     ("Ankara'da tel örgü siparişi için kime ulaşabilirim?",
+      f"Doğanay Tel Örgü sipariş hattı {TEL_G}. Aynı numaraya WhatsApp'tan da yazabilirsiniz; ürün, metraj ve yüksekliği söylemeniz yeterli."),
      ("Doğanay Tel Örgü nerede?", f"Adresimiz {ADRES_G}. Haritadaki konumumuzdan yol tarifi alabilirsiniz."),
     ] + GENEL_SSS
     sema = [isletme(), {"@type": "WebSite", "@id": SITE + "#site", "url": SITE, "name": AD, "inLanguage": "tr"}, sss_sema(sss)]
-    rozet = "".join(f'<li>{ikon(h["ikon"])}<span>{e(h["ad"])}</span></li>' for h in HIZMETLER[:5])
+    rozet = "".join(f'<li><a href="{ic(k["slug"] + "/")}">{ikon(k["ikon"])}<span>{e(k["ad"])}</span></a></li>' for k in KATEGORILER[:6])
+    fiyat_sat = "".join(
+        f'<tr><th scope="row"><a href="{ic(k["slug"] + "-fiyatlari/")}">{e(k["baslik"])} fiyatları</a></th>'
+        f'<td>{e(k["fiyat"]["ozet"][0][0])}</td><td class="tutar">{e(k["fiyat"]["ozet"][0][1])}</td></tr>' for k in KATEGORILER)
     return bas("", t, d, sema, AFIS, onyukle=HERO) + f"""
 <section class="hero"><div class="hero-fon" aria-hidden="true">{resim(HERO, "kb", "eager", "100vw")}</div>
 <div class="desen" aria-hidden="true"></div>
 <div class="ic hero-ic">
   <p class="ust-etiket">Gölbaşı · Ankara</p>
   <h1>Ankara Tel Örgü <span>ve Çit Sistemleri</span></h1>
-  <p class="giris">Bahçenizi, arsanızı, sitenizi ya da deponuzu çevirmek mi istiyorsunuz? Tel örgü, panel çit, jiletli ve
-  dikenli tel, çit kapısı… Ölçüyü yerinde alıyor, direği sağlam dikiyor, teli gergin bağlıyoruz.</p>
-  <div class="dugmeler"><a class="btn btn-tur" href="tel:{TEL}">{ikon("tel", "ikon-b")} Teklif Al: {TEL_G}</a>
+  <p class="giris">Tel örgü, dikenli tel, kafes tel, panel çit, jiletli tel, çim çit… Hepsini burada; fiyatıyla, çeşidiyle,
+  nerede işe yarayıp nerede yaramadığıyla anlattık :) Karar verdiyseniz sipariş hattımız açık.</p>
+  <div class="dugmeler"><a class="btn btn-tur" href="tel:{TEL}">{ikon("tel", "ikon-b")} Sipariş: {TEL_G}</a>
   <a class="btn btn-cizgi" href="{wa('Merhaba, tel örgü için teklif almak istiyorum.')}" target="_blank" rel="noopener">{WA_SVG} WhatsApp</a></div>
   <ul class="hero-rozet">{rozet}</ul>
 </div></section>
 
-<section class="blok" id="hizmetler"><div class="ic">
- <p class="ust-etiket koyu">Hizmetlerimiz</p>
- <h2>Tel örgüden panel çite, Ankara'da çit işleri</h2>
- <p class="bolum-giris">Her alanın ihtiyacı farklı. Bahçe için başka, fabrika için başka, tarla için başka bir çit doğru olur.
- Hizmete tıklayın; nerede kullanıldığını ve nelere dikkat ettiğimizi anlatıyoruz.</p>
- {hizmet_kartlari()}
+<section class="blok" id="urunler"><div class="ic">
+ <p class="ust-etiket koyu">Ürünler ve hizmetler</p>
+ <h2>Ankara'da tel örgü ve çit ürünleri</h2>
+ <p class="bolum-giris">Bahçe için başka, fabrika için başka, tarla için başka bir çit doğru olur. Ürüne tıklayın; fiyatını,
+ çeşitlerini, kullanım alanlarını ve nasıl sipariş vereceğinizi tek tek anlattık.</p>
+ {kategori_kartlari()}
+</div></section>
+
+<section class="blok acik" id="fiyatlar"><div class="ic iki">
+ <div class="kol">
+  <p class="ust-etiket koyu">{FIYAT_TARIH} fiyatları</p>
+  <h2>Ankara tel örgü fiyatları özet</h2>
+  <p>Aşağıdaki rakamlar {FIYAT_TARIH} itibarıyla Türkiye piyasasından topladığımız başlangıç aralıkları. Her ürünün sayfasında
+  kaynaklarıyla birlikte ayrıntılı tabloyu, yurtdışı fiyatlarıyla karşılaştırmayı ve fiyatı neyin değiştirdiğini bulacaksınız.</p>
+  {kutu_html("onemli", "Bunlar piyasa rakamları, bizim teklifimiz değil. Net fiyat için metraj ve yükseklikle sipariş hattımızı arayın.")}
+ </div>
+ <div class="kol"><div class="tablo-sar"><table class="fiyat-tbl ozet-tbl"><thead><tr><th scope="col">Sayfa</th><th scope="col">Kalem</th><th scope="col">Piyasa</th></tr></thead>
+ <tbody>{fiyat_sat}</tbody></table></div></div>
 </div></section>
 
 <section class="blok koyu"><div class="desen" aria-hidden="true"></div><div class="ic iki">
@@ -272,7 +414,7 @@ def anasayfa():
   <p><a class="ok-link acik-ok" href="{ic('hakkimizda/')}">Doğanay Tel Örgü'yü tanıyın →</a></p></div>
 </div></section>
 
-<section class="blok acik"><div class="ic">
+<section class="blok"><div class="ic">
  <p class="ust-etiket koyu">Uygulamalarımızdan</p>
  <h2>Sahada yaptığımız tel örgü işleri</h2>
  <p class="bolum-giris">Beton direkli galvaniz tel örgü, panel çit üstü jiletli tel, tarla ve sanayi parseli çevirme.
@@ -280,10 +422,10 @@ def anasayfa():
  {galeri()}
 </div></section>
 
-<section class="blok"><div class="ic">
+<section class="blok acik"><div class="ic">
  <p class="ust-etiket koyu">Nasıl çalışıyoruz?</p>
  <h2>Telefondan teslime 5 adım</h2>
- {surec_html()}
+ <ol class="surec">{"".join(f"<li><h3>{a}</h3><p>{p}</p></li>" for a, p in SUREC)}</ol>
 </div></section>
 
 <section class="blok"><div class="ic iki">
@@ -305,60 +447,270 @@ def anasayfa():
  <div class="kol">{sss_html(sss)}</div>
 </div>
 <div class="ic">{TEMSILI}</div></section>
-""" + cta_bant("Ankara'da tel örgü mü yaptıracaksınız?") + son()
+""" + cta_bant("Ankara'da tel örgü siparişi mi vereceksiniz?") + son()
+
+TEMSILI = '<p class="temsili">"Uygulamamızdan" etiketli fotoğraflar kendi işlerimizdir; diğerleri ürün türünü gösteren temsilî görsellerdir.</p>'
+
+def kutu_html(tur, metin):
+    ad = {"tavsiye": "Tavsiyemiz", "dikkat": "Dikkat", "onemli": "Önemli", "not": "Bizden not", "ipucu": "Usta ipucu"}[tur]
+    return f'<div class="kutu kutu-{tur}"><b>{ad}:</b> {baglar(metin)}</div>'
 
 
-def hizmet_sayfasi(h):
-    yol = h["slug"] + "/"
-    adim = [("Anasayfa", ""), (h["baslik"], yol)]
-    sema = [isletme(), breadcrumb(adim), sss_sema(h["sss"]),
-            {"@type": "Service", "name": h["baslik"], "serviceType": h["ad"], "description": h["kisa"],
+def kategori_sayfasi(k):
+    yol = k["slug"] + "/"
+    c = k["kat"]
+    adim = [("Anasayfa", ""), (k["baslik"], yol)]
+    sema = [isletme(), breadcrumb(adim), sss_sema(c["sss"]),
+            {"@type": "Service", "name": k["baslik"], "serviceType": k["ad"], "description": k["kisa"],
              "provider": {"@id": SITE + "#isletme"}, "areaServed": {"@type": "City", "name": "Ankara"}, "url": SITE + yol}]
-    giris = "".join(f"<p>{p}</p>" for p in h["giris"])
-    sec = "".join(f"<li><b>{e(a)}</b><span>{e(b)}</span></li>" for a, b in h["secenek"])
-    dk = "".join(f"<li>{e(x)}</li>" for x in h["dikkat"])
-    n = HIZMETLER.index(h)
-    ana = ["Ankara tel örgü", "Doğanay Tel Örgü", "Gölbaşı tel örgü"][n % 3]
-    return bas(yol, h["title"], h["desc"], sema, h["gorsel"], onyukle=h["gorsel"]) + f"""
-<section class="sayfa-bas"><div class="sb-fon" aria-hidden="true">{resim(h["gorsel"], "kb", "eager", "100vw")}</div>
-<div class="desen" aria-hidden="true"></div>
-<div class="ic">
- {iz(adim)}
- <h1>{e(h["baslik"])}</h1>
- <p class="giris">{e(h["kisa"])}</p>
- <div class="dugmeler"><a class="btn btn-tur" href="tel:{TEL}">{ikon("tel", "ikon-b")} Teklif Al: {TEL_G}</a>
- <a class="btn btn-cizgi" href="{wa(f'Merhaba, {h["ad"].lower()} için teklif almak istiyorum.')}" target="_blank" rel="noopener">{WA_SVG} WhatsApp</a></div>
+    kul = "".join(f'<li><b>{e(a)}</b><span>{baglar(b)}</span></li>' for a, b in c["kullanim"])
+    sip = "".join(f"<li>{baglar(x)}</li>" for x in c["siparis"])
+    ek = [("Kullanım alanları", "kullanim-alanlari"), ("Sipariş ver", "siparis-ver"), ("Sık sorulanlar", "sss")]
+    return bas(yol, c["title"], c["desc"], sema, k["gorsel"], onyukle=k["gorsel"], aktif="urun") + sayfa_bas(
+        adim, e(c["h1"]), baglar(c["ust"]), k["gorsel"], f'Merhaba, {k["baslik"]} siparişi vermek istiyorum.') + f"""
+<div class="sekme-sar"><div class="ic">{alt_sekme(k, "kategori")}</div></div>
+
+<section class="blok"><div class="ic yazi-izgara">
+ <article class="yazi">
+  {icindekiler(c["govde"], ek)}
+  {bolumler(c["govde"])}
+ </article>
+ <aside class="yan">
+  {figur(k["gorsel2"], "(max-width: 960px) 100vw, 360px")}
+  <div class="yan-kutu"><p class="yk-bas">{e(k["baslik"])} rehberi</p>
+   <a href="{ic(k['slug'] + '-fiyatlari/')}">{ikon("fiyat")} {e(k["baslik"])} Fiyatları {FIYAT_TARIH[-4:]}</a>
+   <a href="{ic(k['slug'] + '-cesitleri/')}">{ikon("liste")} {e(k["baslik"])} Çeşitleri</a>
+   <a href="#kullanim-alanlari">{ikon("yer")} Kullanım Alanları</a>
+   <a href="#siparis-ver">{ikon("sepet")} Sipariş Ver</a></div>
+  {ozet_kart(k["fiyat"]["ozet"][:3], k["baslik"] + " piyasa fiyatı")}
+ </aside>
 </div></section>
 
-<section class="blok"><div class="ic iki">
- <div class="kol"><h2>{e(h["ad"])} nedir, nerede kullanılır?</h2>{giris}
-  <p>Gölbaşı'ndaki <a href="{ic('')}">{ana}</a> ekibi olarak keşfe gelip ölçüyü yerinde alıyoruz.</p></div>
- <div class="kol"><figure class="cerceve">{resim(h["gorsel2"], sizes="(max-width: 760px) 100vw, 560px")}{altyazi(h["gorsel2"])}</figure></div>
+<section class="blok acik" id="kullanim-alanlari"><div class="ic">
+ <p class="ust-etiket koyu">Kullanım alanları</p>
+ <h2>{e(k["baslik"])} kullanım alanları</h2>
+ <p class="bolum-giris">{baglar(c["kullanim_giris"])}</p>
+ <ul class="secenek">{kul}</ul>
 </div></section>
 
-<section class="blok acik"><div class="ic">
- <h2>Seçenekler</h2>
- <ul class="secenek">{sec}</ul>
+<section class="blok" id="siparis-ver"><div class="ic iki">
+ <div class="kol">
+  <p class="ust-etiket koyu">Sipariş ver</p>
+  <h2>{e(k["baslik"])} sipariş ver</h2>
+  <p>Sipariş için Doğanay Tel Örgü sipariş hattını arayın ya da WhatsApp'tan yazın. Doğru fiyatı hemen verebilmemiz için
+  şunları söylemeniz yeterli:</p>
+  <ol class="kisa-adim">{sip}</ol>
+  <p>Formu doldurup mesajı hazır göndermek isterseniz [[siparis-hatti|sipariş hattı sayfamızı]] kullanabilirsiniz.</p>
+ </div>
+ <div class="kol">{siparis_kutu(k)}</div>
 </div></section>
 
-<section class="blok"><div class="ic iki">
- <div class="kol"><h2>Montajda dikkat ettiklerimiz</h2><ul class="tik koyu-tik">{dk}</ul></div>
- <div class="kol"><h2>Nasıl ilerliyoruz?</h2>
-  <ol class="kisa-adim">{"".join(f"<li><b>{a}:</b> {p}</li>" for a, p in SUREC[:4])}</ol></div>
-</div></section>
-
-<section class="blok acik"><div class="ic iki">
- <div class="kol"><h2>Sık sorulan sorular</h2>{sss_html(h["sss"])}</div>
+<section class="blok acik" id="sss"><div class="ic iki">
+ <div class="kol"><h2>{e(k["baslik"])} hakkında sık sorulanlar</h2>{sss_html(c["sss"])}</div>
  <div class="kol"><h2>Hizmet bölgesi</h2>
   <p>Gölbaşı merkezli olarak Ankara'nın ilçelerinde çalışıyoruz.</p>{ilce_html()}</div>
 </div></section>
 
 <section class="blok"><div class="ic">
- <h2>Diğer hizmetlerimiz</h2>
- {hizmet_kartlari(h)}
+ <h2>Diğer ürünlerimiz</h2>
+ {kategori_kartlari(k)}
  {TEMSILI}
 </div></section>
-""" + cta_bant(f"{e(h['ad'])} için keşif isteyin") + son()
+""".replace("[[siparis-hatti|sipariş hattı sayfamızı]]", f'<a href="{ic("siparis-hatti/")}">sipariş hattı sayfamızı</a>') + cta_bant(
+        f"{e(k['baslik'])} siparişi için arayın") + son()
+
+
+def fiyat_sayfasi(k):
+    yol = k["slug"] + "-fiyatlari/"
+    f = k["fiyat"]
+    adim = [("Anasayfa", ""), (k["baslik"], k["slug"] + "/"), ("Fiyatları", yol)]
+    sema = [isletme(), breadcrumb(adim), sss_sema(f["sss"]), makale(f["h1"], yol, k["gorsel"])]
+    on = [("Türkiye fiyatları", "turkiye-fiyatlari"), ("Yurtdışı karşılaştırması", "yurtdisi-fiyatlari")]
+    ek = [("Sık sorulanlar", "sss")]
+    return bas(yol, f["title"], f["desc"], sema, k["gorsel"], onyukle=k["gorsel"], aktif="urun") + sayfa_bas(
+        adim, e(f["h1"]), baglar(f["ust"]), k["gorsel"], f'Merhaba, {k["baslik"]} fiyatı almak istiyorum.',
+        f'<p class="tarih">Güncelleme: <time datetime="{BUGUN}">{BUGUN_G}</time> · Fiyatlar {FIYAT_TARIH} piyasa verisidir</p>') + f"""
+<div class="sekme-sar"><div class="ic">{alt_sekme(k, "fiyat")}</div></div>
+
+<section class="blok"><div class="ic yazi-izgara">
+ <article class="yazi">
+  {icindekiler(f["govde"], ek, on)}
+  {bolumler(f["giris"])}
+  <section class="yazi-bol" id="turkiye-fiyatlari"><h2>{e(k["baslik"])} fiyatları: Türkiye piyasası ({FIYAT_TARIH})</h2>
+   {baglar(f["tr_giris"])}
+   {tr_tablo(f["tr"])}
+   {baglar(f.get("tr_son", ""))}
+  </section>
+  <section class="yazi-bol" id="yurtdisi-fiyatlari"><h2>Yurtdışı fiyatlarıyla karşılaştırma</h2>
+   {baglar(f["yd_giris"])}
+   {yd_tablo(f["yd"])}
+   {kur_notu()}
+   {baglar(f["yd_yorum"])}
+  </section>
+  {bolumler(f["govde"])}
+  {siparis_kutu(k)}
+ </article>
+ <aside class="yan">
+  {ozet_kart(f["ozet"], k["baslik"] + " fiyatları özet")}
+  <div class="yan-kutu"><p class="yk-bas">{e(k["baslik"])} rehberi</p>
+   <a href="{ic(k['slug'] + '/')}">{ikon(k["ikon"])} {e(k["baslik"])}</a>
+   <a href="{ic(k['slug'] + '-cesitleri/')}">{ikon("liste")} {e(k["baslik"])} Çeşitleri</a>
+   <a href="{ic(k['slug'] + '/')}#kullanim-alanlari">{ikon("yer")} Kullanım Alanları</a>
+   <a href="{ic(k['slug'] + '/')}#siparis-ver">{ikon("sepet")} Sipariş Ver</a></div>
+ </aside>
+</div></section>
+
+<section class="blok acik" id="sss"><div class="ic dar-ic">
+ <h2>{e(k["baslik"])} fiyatları hakkında sık sorulanlar</h2>{sss_html(f["sss"])}
+</div></section>
+
+<section class="blok"><div class="ic">
+ <h2>Diğer ürünlerin fiyatları</h2>
+ <ul class="link-bulut">{"".join(f'<li><a href="{ic(x["slug"] + "-fiyatlari/")}">{e(x["baslik"])} fiyatları</a></li>' for x in KATEGORILER if x is not k)}</ul>
+</div></section>
+""" + cta_bant(f"{e(k['baslik'])} için net fiyat alın") + son()
+
+
+def cesit_sayfasi(k):
+    yol = k["slug"] + "-cesitleri/"
+    c = k["cesit"]
+    adim = [("Anasayfa", ""), (k["baslik"], k["slug"] + "/"), ("Çeşitleri", yol)]
+    sema = [isletme(), breadcrumb(adim), sss_sema(c["sss"]), makale(c["h1"], yol, c.get("gorsel", k["gorsel2"]))]
+    ces = "".join(
+        f'<section class="cesit" id="{cid}"><div class="cesit-bas"><span class="cesit-no">{n + 1:02d}</span><h3>{e(ad)}</h3></div>'
+        f'{baglar(govde)}' + (f'<ul class="etiketler">{"".join(f"<li>{e(x)}</li>" for x in etk)}</ul>' if etk else "") + "</section>"
+        for n, (cid, ad, govde, etk) in enumerate(c["cesitler"]))
+    ek = [("Karşılaştırma tablosu", "karsilastirma"), ("Sık sorulanlar", "sss")]
+    return bas(yol, c["title"], c["desc"], sema, c.get("gorsel", k["gorsel2"]), onyukle=c.get("gorsel", k["gorsel2"]), aktif="urun") + sayfa_bas(
+        adim, e(c["h1"]), baglar(c["ust"]), c.get("gorsel", k["gorsel2"]), f'Merhaba, {k["baslik"]} çeşitleri hakkında bilgi almak istiyorum.') + f"""
+<div class="sekme-sar"><div class="ic">{alt_sekme(k, "cesit")}</div></div>
+
+<section class="blok"><div class="ic yazi-izgara">
+ <article class="yazi">
+  {icindekiler([(None, "", "")] + [(ad, "", cid) for cid, ad, _, _ in c["cesitler"]], ek)}
+  {bolumler(c["giris"])}
+  <div class="cesitler">{ces}</div>
+  <section class="yazi-bol" id="karsilastirma"><h2>{e(k["baslik"])} çeşitleri karşılaştırma</h2>
+   {karsilastirma(c["tablo"])}</section>
+  {bolumler(c["govde"])}
+  {siparis_kutu(k)}
+ </article>
+ <aside class="yan">
+  {figur(k["gorsel"], "(max-width: 960px) 100vw, 360px")}
+  <div class="yan-kutu"><p class="yk-bas">{e(k["baslik"])} rehberi</p>
+   <a href="{ic(k['slug'] + '/')}">{ikon(k["ikon"])} {e(k["baslik"])}</a>
+   <a href="{ic(k['slug'] + '-fiyatlari/')}">{ikon("fiyat")} {e(k["baslik"])} Fiyatları</a>
+   <a href="{ic(k['slug'] + '/')}#kullanim-alanlari">{ikon("yer")} Kullanım Alanları</a>
+   <a href="{ic(k['slug'] + '/')}#siparis-ver">{ikon("sepet")} Sipariş Ver</a></div>
+ </aside>
+</div></section>
+
+<section class="blok acik" id="sss"><div class="ic dar-ic">
+ <h2>{e(k["baslik"])} çeşitleri hakkında sık sorulanlar</h2>{sss_html(c["sss"])}
+</div></section>
+
+<section class="blok"><div class="ic">
+ <h2>Diğer ürünler</h2>
+ {kategori_kartlari(k)}
+ {TEMSILI}
+</div></section>
+""" + cta_bant() + son()
+
+
+def siparis_hatti():
+    yol = "siparis-hatti/"
+    t = f"Sipariş Hattı {TEL_G} | Doğanay Tel Örgü Ankara"
+    d = (f"Ankara Doğanay Tel Örgü sipariş hattı: {TEL_G}. Tel örgü, dikenli tel, kafes tel, panel çit, jiletli tel ve "
+         "çim çit siparişi için arayın ya da yazın.")
+    adim = [("Anasayfa", ""), ("Sipariş Hattı", yol)]
+    sss = [
+     ("Sipariş verirken ne söylemeliyim?", "Ürün, yaklaşık metraj (metre ya da m²), yükseklik, kapı olup olmayacağı ve işin yapılacağı ilçe yeterli. Fotoğraf atarsanız daha da iyi."),
+     ("Sadece malzeme alabilir miyim?", "Evet, malzemeli ya da yalnız işçilik çalışabiliyoruz; ihtiyacınızı söyleyin, birlikte netleştirelim."),
+     ("Siparişten sonra ne oluyor?", "Gerekiyorsa keşfe gelip ölçüyü yerinde alıyoruz, net fiyat ve iş gününü veriyoruz, montajı yapıp teslim ediyoruz."),
+    ]
+    sema = [isletme(), breadcrumb(adim), sss_sema(sss), {"@type": "ContactPage", "url": SITE + yol, "about": {"@id": SITE + "#isletme"}}]
+    sec = "".join(f'<option>{e(k["baslik"])}</option>' for k in KATEGORILER)
+    ilc = "".join(f"<option>{x}</option>" for x in ILCELER) + "<option>Diğer</option>"
+    return bas(yol, t, d, sema) + f"""
+<section class="sayfa-bas sade"><div class="desen" aria-hidden="true"></div><div class="ic">
+ {iz(adim)}
+ <h1>Doğanay Tel Örgü Sipariş Hattı</h1>
+ <p class="giris">Ankara'da tel örgü, dikenli tel, kafes tel, panel çit, jiletli tel ya da çim çit siparişi vermek için
+ doğru yerdesiniz. Arayın ya da aşağıdaki formu doldurun; mesajınız WhatsApp'ta hazır açılsın.</p>
+ <a class="hero-tel" href="tel:{TEL}"><small>Sipariş hattı</small>{TEL_G}</a>
+</div></section>
+
+<section class="blok"><div class="ic iki">
+ <div class="kol">
+  <h2>WhatsApp sipariş formu</h2>
+  <p>Formdaki bilgiler hiçbir yere kaydedilmez; yalnızca WhatsApp mesajınızı hazırlar. Gönder dediğinizde WhatsApp açılır.</p>
+  <form class="siparis-form" id="siparis-form" data-wa="{WA}">
+   <label>Ürün<select name="urun" required>{sec}</select></label>
+   <div class="form-iki"><label>Yaklaşık metraj<input name="metraj" inputmode="decimal" placeholder="Örn. 120 metre"></label>
+   <label>Yükseklik<input name="yukseklik" placeholder="Örn. 150 cm"></label></div>
+   <div class="form-iki"><label>İlçe<select name="ilce">{ilc}</select></label>
+   <label>Montaj<select name="montaj"><option>Montajlı istiyorum</option><option>Sadece malzeme</option><option>Emin değilim</option></select></label></div>
+   <label>Not<textarea name="not" rows="3" placeholder="Kapı, zemin, eğim gibi eklemek istedikleriniz"></textarea></label>
+   <button class="btn btn-tur" type="submit">{WA_SVG} WhatsApp'tan gönder</button>
+  </form>
+ </div>
+ <div class="kol">
+  <ul class="ilet">
+   <li>{ikon("tel")}<div><small>Sipariş hattı</small><a href="tel:{TEL}">{TEL_G}</a></div></li>
+   <li><span class="ikon wa-ikon">{WA_SVG}</span><div><small>WhatsApp</small><a href="{wa()}" target="_blank" rel="noopener">{TEL_G}</a></div></li>
+   <li>{ikon("konum")}<div><small>Adres</small><address>{ADRES_G}</address><a href="{HARITA_URL}" target="_blank" rel="noopener">Haritada aç →</a></div></li>
+  </ul>
+  <h2>Sık sorulanlar</h2>{sss_html(sss)}
+ </div>
+</div></section>
+
+<section class="blok acik"><div class="ic">
+ <h2>Ürünlerimiz</h2>
+ {kategori_kartlari()}
+</div></section>
+""" + son()
+
+
+def hakkimizda():
+    yol = "hakkimizda/"
+    t = "Hakkımızda | Doğanay Tel Örgü - Gölbaşı Ankara"
+    d = ("Doğanay Tel Örgü, Gölbaşı'nda tel örgü, panel çit, jiletli ve dikenli tel işleri yapan ekip. Nasıl "
+         "çalıştığımızı ve sahadaki işlerimizi görün.")
+    adim = [("Anasayfa", ""), ("Hakkımızda", yol)]
+    sema = [isletme(), breadcrumb(adim), {"@type": "AboutPage", "url": SITE + yol, "about": {"@id": SITE + "#isletme"}}]
+    return bas(yol, t, d, sema, AFIS) + f"""
+<section class="sayfa-bas sade"><div class="desen" aria-hidden="true"></div><div class="ic">
+ {iz(adim)}
+ <h1>Doğanay Tel Örgü</h1>
+ <p class="giris">Gölbaşı'nda, Ankara'nın tel örgü ve çit işlerini yapan bir ekibiz. Konut bahçesinden fabrika
+ çevresine, tarladan spor sahasına kadar alanları çeviriyoruz.</p>
+</div></section>
+
+<section class="blok"><div class="ic iki">
+ <div class="kol"><figure class="afis-fig">{resim(AFIS, "", "eager", "(max-width: 760px) 100vw, 640px")}</figure></div>
+ <div class="kol">
+  <h2>Ne yapıyoruz?</h2>
+  <p>Tel örgü, dikenli tel, kafes tel, panel çit, jiletli tel, çim çit ve çit kapısı. Kısacası bir alanın sınırını çizmek ve
+  korumak için gereken işlerin hepsi. Alanı yerinde görüp ölçüyor, ihtiyaca uygun çiti birlikte seçiyor ve montajını yapıyoruz.</p>
+  <h2>Nasıl çalışıyoruz?</h2>
+  <p>Bir çitin ömrünü telden çok direk ve montaj belirler. Hattı ip ile çekiyor, köşe ve uç direklerini
+  payandalıyor, betonun oturmasını bekleyip teli gerdirerek bağlıyoruz. Fiyatı da malzeme ve işçilik ayrı ayrı
+  görünecek şekilde konuşuyoruz.</p>
+  <ul class="tik koyu-tik"><li>Yerinde keşif ve ölçü</li><li>Malzemeli ya da yalnız işçilik</li>
+   <li>Konut, sanayi, tarım ve spor alanları</li><li>Gölbaşı merkezli, Ankara genelinde</li></ul>
+ </div>
+</div></section>
+
+<section class="blok acik"><div class="ic">
+ <h2>Uygulamalarımızdan</h2>
+ {galeri()}
+</div></section>
+
+<section class="blok"><div class="ic">
+ <h2>Ürünlerimiz</h2>
+ {kategori_kartlari()}
+</div></section>
+""" + cta_bant() + son()
 
 
 def iletisim():
@@ -382,51 +734,10 @@ def iletisim():
    <li>{ikon("konum")}<div><small>Adres</small><address>{ADRES_G}</address><a href="{HARITA_URL}" target="_blank" rel="noopener">Haritada aç →</a></div></li>
   </ul>
   <p>Arayınca şunları söylemeniz yeterli: alanın yeri, yaklaşık uzunluğu (metre), istediğiniz yükseklik ve kapı
-  olup olmayacağı. Fotoğraf atarsanız keşiften önce fikir verebiliriz.</p>
+  olup olmayacağı. Fotoğraf atarsanız keşiften önce fikir verebiliriz. Hazır mesajla yazmak için
+  <a href="{ic('siparis-hatti/')}">sipariş hattı formunu</a> kullanabilirsiniz.</p>
  </div>
  <div class="kol">{harita()}</div>
-</div></section>
-""" + cta_bant() + son()
-
-
-def hakkimizda():
-    yol = "hakkimizda/"
-    t = "Hakkımızda | Doğanay Tel Örgü - Gölbaşı Ankara"
-    d = ("Doğanay Tel Örgü, Gölbaşı'nda tel örgü, panel çit, jiletli ve dikenli tel işleri yapan ekip. Nasıl "
-         "çalıştığımızı ve sahadaki işlerimizi görün.")
-    adim = [("Anasayfa", ""), ("Hakkımızda", yol)]
-    sema = [isletme(), breadcrumb(adim), {"@type": "AboutPage", "url": SITE + yol, "about": {"@id": SITE + "#isletme"}}]
-    return bas(yol, t, d, sema, AFIS) + f"""
-<section class="sayfa-bas sade"><div class="desen" aria-hidden="true"></div><div class="ic">
- {iz(adim)}
- <h1>Doğanay Tel Örgü</h1>
- <p class="giris">Gölbaşı'nda, Ankara'nın tel örgü ve çit işlerini yapan bir ekibiz. Konut bahçesinden fabrika
- çevresine, tarladan spor sahasına kadar alanları çeviriyoruz.</p>
-</div></section>
-
-<section class="blok"><div class="ic iki">
- <div class="kol"><figure class="afis-fig">{resim(AFIS, "", "eager", "(max-width: 760px) 100vw, 640px")}</figure></div>
- <div class="kol">
-  <h2>Ne yapıyoruz?</h2>
-  <p>Tel örgü, panel çit, jiletli tel, dikenli tel ve çit kapısı. Kısacası bir alanın sınırını çizmek ve korumak
-  için gereken işlerin hepsi. Alanı yerinde görüp ölçüyor, ihtiyaca uygun çiti birlikte seçiyor ve montajını yapıyoruz.</p>
-  <h2>Nasıl çalışıyoruz?</h2>
-  <p>Bir çitin ömrünü telden çok direk ve montaj belirler. Hattı ip ile çekiyor, köşe ve uç direklerini
-  payandalıyor, betonun oturmasını bekleyip teli gerdirerek bağlıyoruz. Fiyatı da malzeme ve işçilik ayrı ayrı
-  görünecek şekilde konuşuyoruz.</p>
-  <ul class="tik koyu-tik"><li>Yerinde keşif ve ölçü</li><li>Malzemeli ya da yalnız işçilik</li>
-   <li>Konut, sanayi, tarım ve spor alanları</li><li>Gölbaşı merkezli, Ankara genelinde</li></ul>
- </div>
-</div></section>
-
-<section class="blok acik"><div class="ic">
- <h2>Uygulamalarımızdan</h2>
- {galeri()}
-</div></section>
-
-<section class="blok"><div class="ic">
- <h2>Hizmetlerimiz</h2>
- {hizmet_kartlari()}
 </div></section>
 """ + cta_bant() + son()
 
@@ -439,7 +750,7 @@ def sayfa_404():
     s += f"""<section class="sayfa-bas sade"><div class="desen" aria-hidden="true"></div><div class="ic"><h1>Sayfa bulunamadı</h1>
 <p class="giris">Aradığınız sayfa taşınmış ya da hiç olmamış olabilir.</p>
 <div class="dugmeler"><a class="btn btn-tur" href="/">Anasayfaya dönün</a></div></div></section>
-<section class="blok"><div class="ic">{hizmet_kartlari()}</div></section>""" + son()
+<section class="blok"><div class="ic">{kategori_kartlari()}</div></section>""" + son()
     return s
 
 # ------------------------------------------------------------------ denetim + yazım
@@ -454,9 +765,12 @@ def denetle(sayfalar):
             if len(html.unescape(t)) > 65: h.append(f"title uzun ({len(html.unescape(t))}): {yol}")
             if len(html.unescape(d)) > 165: h.append(f"description uzun ({len(html.unescape(d))}): {yol}")
         if s.count("<h1") != 1: h.append(f"h1 sayısı {s.count('<h1')}: {yol}")
+        if "[[" in s: h.append(f"çözülmemiş link işareti: {yol}")
         metin = tr_lower(html.unescape(re.sub(r"<[^>]+>", " ", s)))
         h += [f"yasak '{y}': {yol}" for y in YASAK if y in metin]
+        kimlik = set(re.findall(r'id="([^"]+)"', s))
         for href in re.findall(r'(?:href|src)="([^"]+)"', s):
+            if href.startswith("#") and href[1:] not in kimlik and href != "#": h.append(f"kırık çapa {href} ({yol})")
             href = re.split(r"[?#]", href)[0]
             if yol == "404.html" or href.startswith("/") or ":" in href or not href: continue
             hedef = os.path.normpath(os.path.join(os.path.dirname(yol) or ".", href))
@@ -479,6 +793,8 @@ def sema_ekle(s, yol):
         g["@graph"].append({"@type": "WebSite", "@id": SITE + "#site", "url": SITE, "name": AD, "inLanguage": "tr"})
     return s[:m.start(1)] + json.dumps(g, ensure_ascii=False) + s[m.end(1):]
 
+ESKI = ["panel-cit", "jiletli-tel", "dikenli-tel", "tel-orgu-kapi", "arsa-tarla-cevirme", "spor-sahasi-teli"]
+
 def main():
     global ONEK
     gorselleri_hazirla()
@@ -490,11 +806,17 @@ def main():
         ONEK = "../" * yol.count("/") if yol else ""
         S[(yol + "index.html") if yol else "index.html"] = sema_ekle(fn(*a), yol)
     yaz("", anasayfa)
-    for h in HIZMETLER: yaz(h["slug"] + "/", hizmet_sayfasi, h)
-    yaz("hakkimizda/", hakkimizda); yaz("iletisim/", iletisim)
+    for k in KATEGORILER:
+        yaz(k["slug"] + "/", kategori_sayfasi, k)
+        yaz(k["slug"] + "-fiyatlari/", fiyat_sayfasi, k)
+        yaz(k["slug"] + "-cesitleri/", cesit_sayfasi, k)
+    yaz("siparis-hatti/", siparis_hatti); yaz("hakkimizda/", hakkimizda); yaz("iletisim/", iletisim)
     S["404.html"] = sayfa_404()
     hata = denetle(S)
     if hata: print("\n".join(hata)); sys.exit(1)
+    for d in ESKI:                                  # yayından önce kaldırılan eski hizmet klasörleri
+        p = os.path.join(KOK, d)
+        if os.path.isdir(p) and not any(d + "/" == y[:len(d) + 1] for y in S): shutil.rmtree(p)
     for yol, s in S.items():
         p = os.path.join(KOK, yol); os.makedirs(os.path.dirname(p), exist_ok=True)
         open(p, "w", encoding="utf-8").write(s)
