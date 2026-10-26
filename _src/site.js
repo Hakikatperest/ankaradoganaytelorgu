@@ -40,13 +40,14 @@
     });
   }
 
-  // alt çubuk: sayfa dibinde (imza bandı) gizlenir, imza tıklanabilir kalsın
+  // alt çubuk: üstteki arama/WhatsApp butonları görünürken ve sayfa dibinde (imza bandı) gizlenir
   var dock = document.getElementById("dock");
   if (dock) {
-    var bekle = false;
+    var bekle = false, ustBtn = document.querySelector(".hero .dugmeler, .sayfa-bas .dugmeler, .sayfa-bas .hero-tel");
     var guncelle = function () {
       var kalan = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
-      dock.classList.toggle("gizli", kalan < 120);
+      var ustGorunur = ustBtn && ustBtn.getBoundingClientRect().bottom > 0;
+      dock.classList.toggle("gizli", kalan < 120 || !!ustGorunur);
       bekle = false;
     };
     window.addEventListener("scroll", function () { if (!bekle) { bekle = true; requestAnimationFrame(guncelle); } }, { passive: true });

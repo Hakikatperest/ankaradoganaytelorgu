@@ -423,3 +423,9 @@ address{font-style:normal}
 .hesap table{table-layout:fixed}
 .hesap td:last-child{white-space:normal;width:42%}
 @media (max-width:520px){.hesap td{display:block;width:auto!important;text-align:left!important;padding-left:0!important}.hesap td:first-child{border:0;padding-bottom:0;color:var(--soluk);font-size:.9rem}.hesap tr{display:block;border-bottom:1px solid var(--cizgi);padding:6px 0}.hesap td:last-child{border:0}}
+
+/* mobil hero butonları tam satır, eşit (2026-10-26) */
+@media (max-width:560px){
+ .hero .dugmeler,.sayfa-bas .dugmeler{display:grid;grid-template-columns:1fr;gap:10px}
+ .hero .dugmeler .btn,.sayfa-bas .dugmeler .btn{width:100%}
+}
