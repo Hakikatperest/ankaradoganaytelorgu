@@ -54,6 +54,15 @@
     guncelle();
   }
 
+  // Google Ads "Tıkla ve ara" dönüşümü: sitedeki her tel: bağlantısı (üst şerit, butonlar, alt çubuk, alt bilgi).
+  // url verilmiyor → arama tarayıcının kendi akışıyla hemen başlar, dönüşüm arka planda gönderilir.
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest('a[href^="tel:"]');
+    if (a && typeof window.gtag_report_conversion === "function") {
+      try { window.gtag_report_conversion(); } catch (_) {}
+    }
+  }, true);
+
   // ışık kutusu
   document.addEventListener("click", function (e) {
     var a = e.target.closest("[data-buyut]");

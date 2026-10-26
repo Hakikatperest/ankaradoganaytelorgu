@@ -35,9 +35,38 @@ HARITA_EMBED = ("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d97974.877
                 "!2zRE_EnkFOQVkgVEVMIMOWUkfDnA!5e0!3m2!1str!2str!4v1792984681174!5m2!1str!2str")
 BUGUN = "2026-10-26"            # yayın tarihi SABİT
 BUGUN_G = "26 Ekim 2026"
-SURUM = "6"
+SURUM = "7"
 YASAK = ["en ucuz", "garanti", "1 numara", "bir numaralı", "%100", "lider", "7/24", "yılı aşkın", "yıllık tecrübe",
          "en iyi", "sigortalı", "kendi üretimimiz", "fabrikamız", "lorem"]
+
+# Google Ads etiketi (kullanıcı 2026-10-26): global gtag + "Tıkla ve ara" dönüşümü; tel: tıklaması site.js'te bağlı
+ADS_ID = "AW-18538306458"
+ADS_ARAMA = "AW-18538306458/KFbSCLqyuaodEJq34IdF"
+ADS_ETIKET = f"""<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={ADS_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', '{ADS_ID}');
+</script>
+<!-- Event snippet for Tıkla ve ara conversion page -->
+<script>
+function gtag_report_conversion(url) {{
+  var callback = function () {{
+    if (typeof(url) != 'undefined') {{
+      window.location = url;
+    }}
+  }};
+  gtag('event', 'conversion', {{
+      'send_to': '{ADS_ARAMA}',
+      'value': 1.0,
+      'currency': 'TRY',
+      'event_callback': callback
+  }});
+  return false;
+}}
+</script>"""
 
 e = html.escape
 ONEK = ""
@@ -180,6 +209,7 @@ def bas(yol, title, desc, sema, ogimg=None, onyukle=None, aktif=""):
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="{ic('assets/site.css')}?v={SURUM}">
+{ADS_ETIKET}
 <script type="application/ld+json">{json.dumps({"@context": "https://schema.org", "@graph": sema}, ensure_ascii=False)}</script>
 </head>
 <body>
