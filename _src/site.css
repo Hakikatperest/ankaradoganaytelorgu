@@ -69,6 +69,11 @@ address{font-style:normal}
 .ikon-b{fill:currentColor}
 .btn-tur{background:var(--tur);color:#fff;box-shadow:0 8px 20px -8px rgba(255,121,0,.7)}
 .btn-tur:hover{background:var(--tur-2);transform:translateY(-1px)}
+.btn-mavi{background:#1D6FF2;color:#fff;box-shadow:0 8px 20px -8px rgba(29,111,242,.8)}
+.btn-mavi:hover{background:#155ED6;transform:translateY(-1px)}
+.nabiz{animation:nabiz 1.8s ease-out infinite}
+@keyframes nabiz{0%{box-shadow:0 0 0 0 rgba(29,111,242,.7),0 8px 20px -8px rgba(29,111,242,.8)}75%,100%{box-shadow:0 0 0 16px rgba(29,111,242,0),0 8px 20px -8px rgba(29,111,242,.8)}}
+@media (prefers-reduced-motion:reduce){.nabiz{animation:none}}
 .btn-cizgi{color:#fff;border-color:rgba(255,255,255,.55)}
 .btn-cizgi:hover{background:rgba(255,255,255,.1);border-color:#fff}
 .btn-lac{background:var(--lac);color:#fff}
