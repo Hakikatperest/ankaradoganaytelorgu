@@ -104,8 +104,8 @@ address{font-style:normal}
 .hero-rozet svg{width:18px;height:18px;fill:none;stroke:var(--tur);stroke-width:1.8}
 @media (max-width:760px){
  .hero{min-height:auto;align-items:flex-end}
- .hero-ic{padding-block:150px 40px}
- .hero::after,.sayfa-bas::after{background:linear-gradient(0deg,rgba(6,29,61,.97) 30%,rgba(6,29,61,.78) 65%,rgba(6,29,61,.4))}
+ .hero-ic{padding-block:36px 40px}
+ .hero::after,.sayfa-bas::after{background:linear-gradient(0deg,rgba(6,29,61,.97) 30%,rgba(6,29,61,.84) 65%,rgba(6,29,61,.7))}
  .hero-rozet{display:none}
 }
 @media (prefers-reduced-motion:reduce){.kb{animation:none}}

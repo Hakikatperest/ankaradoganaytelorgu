@@ -1,6 +1,6 @@
 """Doğanay Tel Örgü — ortak veri (görseller, ilçeler, süreç, genel SSS). Kategori içerikleri: _src/icerik/.
 
-⛔ Teyitsiz iddia yazma: üretim, garanti, yıl/deneyim, 7/24, fiyat, "en ucuz/en iyi" — denetim.py listesinde.
+⛔ Teyitsiz iddia yazma: üretim, garanti, yıl/deneyim, fiyat, "en ucuz/en iyi" — denetim.py listesinde. (7/24: kullanıcı 2026-10-30 hero için onayladı)
 Görseller Unsplash stok (temsili): "bizim işimiz" diye sunma.
 """
 

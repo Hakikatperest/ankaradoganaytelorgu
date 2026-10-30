@@ -35,8 +35,8 @@ HARITA_EMBED = ("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d97974.877
                 "!2zRE_EnkFOQVkgVEVMIMOWUkfDnA!5e0!3m2!1str!2str!4v1792984681174!5m2!1str!2str")
 BUGUN = "2026-10-26"            # yayın tarihi SABİT
 BUGUN_G = "26 Ekim 2026"
-SURUM = "8"
-YASAK = ["en ucuz", "garanti", "1 numara", "bir numaralı", "%100", "lider", "7/24", "yılı aşkın", "yıllık tecrübe",
+SURUM = "9"
+YASAK = ["en ucuz", "garanti", "1 numara", "bir numaralı", "%100", "lider", "yılı aşkın", "yıllık tecrübe",
          "en iyi", "sigortalı", "kendi üretimimiz", "fabrikamız", "lorem"]
 
 # Google Ads etiketi (kullanıcı 2026-10-26): global gtag + "Tıkla ve ara" dönüşümü; tel: tıklaması site.js'te bağlı
@@ -412,7 +412,7 @@ def anasayfa():
   <p class="ust-etiket">Gölbaşı · Ankara</p>
   <h1>Ankara Tel Örgü <span>ve Çit Sistemleri</span></h1>
   <p class="giris">Tel örgü, dikenli tel, kafes tel, panel çit, jiletli tel, çim çit… Hepsini burada; fiyatıyla, çeşidiyle,
-  nerede işe yarayıp nerede yaramadığıyla anlattık :) Karar verdiyseniz sipariş hattımız açık.</p>
+  nerede işe yarayıp nerede yaramadığıyla anlattık. Tüm sorularınız için 7/24 arayabilirsiniz.</p>
   <div class="dugmeler"><a class="btn btn-mavi nabiz" href="tel:{TEL}">{ikon("tel", "ikon-b")} {TEL_G}</a>
   <a class="btn btn-cizgi" href="{wa('Merhaba, tel örgü için teklif almak istiyorum.')}" target="_blank" rel="noopener">{WA_SVG} WhatsApp</a></div>
   <ul class="hero-rozet">{rozet}</ul>
