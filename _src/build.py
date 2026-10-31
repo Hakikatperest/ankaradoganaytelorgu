@@ -35,7 +35,7 @@ HARITA_EMBED = ("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d97974.877
                 "!2zRE_EnkFOQVkgVEVMIMOWUkfDnA!5e0!3m2!1str!2str!4v1792984681174!5m2!1str!2str")
 BUGUN = "2026-10-26"            # yayın tarihi SABİT
 BUGUN_G = "26 Ekim 2026"
-SURUM = "9"
+SURUM = "10"
 YASAK = ["en ucuz", "garanti", "1 numara", "bir numaralı", "%100", "lider", "yılı aşkın", "yıllık tecrübe",
          "en iyi", "sigortalı", "kendi üretimimiz", "fabrikamız", "lorem"]
 
@@ -261,6 +261,12 @@ def son():
 </footer>
 <div class="dock" id="dock"><a class="dock-tel" href="tel:{TEL}"><small>Sipariş hattı</small><span>{TEL_G}</span></a>
 <a class="dock-wa" href="{wa()}" target="_blank" rel="noopener" aria-label="WhatsApp'tan yaz">{WA_SVG}</a></div>
+<aside class="danisma" id="danisma" role="dialog" aria-labelledby="danisma-bas" hidden>
+ <button class="danisma-kapat" type="button" aria-label="Bildirimi kapat">×</button>
+ <span class="danisma-ikon">{ikon("tel")}</span>
+ <p class="danisma-bas" id="danisma-bas">Ücretsiz danışma hattımızı arayın:</p>
+ <a class="btn btn-mavi nabiz danisma-btn" href="tel:{TEL}">{ikon("tel", "ikon-b")} {TEL_G}</a>
+</aside>
 <script src="{ic('assets/site.js')}?v={SURUM}" defer></script>
 </body>
 </html>

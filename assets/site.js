@@ -63,6 +63,25 @@
     }
   }, true);
 
+  // danışma hattı bildirimi: 5. saniyede tüm ziyaretçilere; kapatılınca ya da arayınca oturum boyunca gelmez
+  var dn = document.getElementById("danisma"), DN_ANAHTAR = "dt-danisma-kapandi-v1";
+  if (dn) {
+    var dnKapali = function () { try { return sessionStorage.getItem(DN_ANAHTAR) === "1"; } catch (_) { return false; } };
+    var dnKapat = function () {
+      try { sessionStorage.setItem(DN_ANAHTAR, "1"); } catch (_) {}
+      dn.classList.remove("acik");
+      setTimeout(function () { dn.hidden = true; }, 400);
+    };
+    dn.querySelector(".danisma-kapat").addEventListener("click", dnKapat);
+    dn.querySelector(".danisma-btn").addEventListener("click", function () { try { sessionStorage.setItem(DN_ANAHTAR, "1"); } catch (_) {} setTimeout(dnKapat, 300); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !dn.hidden) dnKapat(); });
+    if (!dnKapali()) setTimeout(function () {
+      if (dnKapali()) return;
+      dn.hidden = false;
+      requestAnimationFrame(function () { requestAnimationFrame(function () { dn.classList.add("acik"); }); });
+    }, 5000);
+  }
+
   // ışık kutusu
   document.addEventListener("click", function (e) {
     var a = e.target.closest("[data-buyut]");
