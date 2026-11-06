@@ -44,7 +44,7 @@ GORSEL = {
  "tel-cim-1": "Okul binası önünde panel çite kaplanmış yeşil çim çit",
  "panel-tel-1": "Yol kenarındaki parselde yeşil panel çit hattı",
  "panelcit": "Köy yolu boyunca uzanan yeşil panel çit",
- "ankara-doganay-tel-orgu": "Doğanay Tel Örgü tanıtım afişi: Dayanıklı Tel Örgü Sistemleri, telefon 0530 155 29 27",
+ "ankara-doganay-tel-orgu": "Doğanay Tel Örgü tanıtım afişi: Dayanıklı Tel Örgü Sistemleri",
  "panel-cit-jiletli-tel": "Uzun hat boyunca yeşil panel çit, üstünde spiral jiletli tel",
  "bahce-teli": "Çim alan önünde koyu renk örgü bahçe teli",
  "tel-orgu-yakin": "Yakından baklava gözlü tel örgü, arkada yeşillik",

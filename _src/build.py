@@ -25,7 +25,7 @@ from ilceler import ILCE, URUNLER
 
 SITE = "https://ankaradoganaytelorgu.com/"
 AD = "Doğanay Tel Örgü"
-TEL, TEL_G, WA = "+905301552927", "0530 155 29 27", "905301552927"
+TEL, TEL_G, WA = "+905304032927", "0530 403 29 27", "905304032927"
 ADRES = {"sokak": "Gaziosmanpaşa Mah., 377. Sk. No:20 D:14", "pk": "06830", "ilce": "Gölbaşı", "il": "Ankara"}
 ADRES_G = "Gaziosmanpaşa, 377. Sk. No:20 D:14, 06830 Gölbaşı/Ankara"
 HARITA_CID = "11896703876323172056"
@@ -35,7 +35,7 @@ HARITA_EMBED = ("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d97974.877
                 "!2zRE_EnkFOQVkgVEVMIMOWUkfDnA!5e0!3m2!1str!2str!4v1792984681174!5m2!1str!2str")
 BUGUN = "2026-10-26"            # yayın tarihi SABİT
 BUGUN_G = "26 Ekim 2026"
-SURUM = "10"
+SURUM = "11"
 YASAK = ["en ucuz", "garanti", "1 numara", "bir numaralı", "%100", "lider", "yılı aşkın", "yıllık tecrübe",
          "en iyi", "sigortalı", "kendi üretimimiz", "fabrikamız", "lorem"]
 
